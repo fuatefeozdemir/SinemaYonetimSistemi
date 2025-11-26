@@ -38,7 +38,6 @@ public abstract class User {
         if (firstName == null) {
             throw new InvalidInputException("İsim null olamaz.");
         }
-
         this.firstName = firstName;
     }
 
