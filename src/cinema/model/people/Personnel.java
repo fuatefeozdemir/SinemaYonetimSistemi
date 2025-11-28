@@ -1,4 +1,4 @@
-package cinema.model;
+package cinema.model.people;
 
 import cinema.exception.InvalidInputException;
 
@@ -6,9 +6,9 @@ import java.time.LocalDate;
 
 public abstract class Personnel extends User {
     private int staffID;
-    private double hourlyRate;
-    private boolean isFullTime;
-    private LocalDate hireDate;
+    private double hourlyRate; // Çalışanın saatli ücreti
+    private boolean isFullTime; // Çalışanın part time çalışıp çalışmama durumu
+    private LocalDate hireDate; // Çalışanın işe alım tarihi
 
     // Personellerin maaşlarının hesaplanmasında kullanılacak olan sabitler.
     public static final double FULL_TIME_HOURS = 160.0;
@@ -17,8 +17,6 @@ public abstract class Personnel extends User {
     public Personnel(String firstName, String lastName, String email, LocalDate dateOfBirth,
                      int staffId, double hourlyRate, boolean isFullTime, LocalDate hireDate) {
         super(firstName, lastName, email, dateOfBirth);
-
-        // Constructor'da setter metotları çağrılarak gerekli kontrollerin yapılması sağlanır.
         setStaffID(staffId);
         setHourlyRate(hourlyRate);
         setFullTime(isFullTime);
@@ -67,11 +65,6 @@ public abstract class Personnel extends User {
         this.hireDate = hireDate;
     }
 
-    @Override
-    public abstract String displayInfo();
-
-    @Override
-    public abstract String getRole();
-
+    // Aylık ücreti hesaplayan metot
     public abstract double calculateMonthlySalary();
 }

@@ -1,9 +1,10 @@
-package cinema.model;
+package cinema.model.people;
 
 import cinema.exception.InvalidInputException;
+
 import java.time.LocalDate;
 
-public class Customer extends User{
+public class Customer extends User {
     private int loyaltyPoints;
 
     // Varsayılan Constructor (Puan 0'dan başlar)
@@ -16,16 +17,18 @@ public class Customer extends User{
     // Constructor (Overloading) (Veri yükleme senaryosunda kullanılır.)
     public Customer(String firstName, String lastName, String email, LocalDate dateOfBirth, int loyaltyPoints) {
         super(firstName, lastName, email, dateOfBirth);
-        // Gelen puanı kontrol ederek atar.
+
         setLoyaltyPoints(loyaltyPoints);
     }
 
     // --- GETTER METOTLARI ---
+
     public int getLoyaltyPoints() {
         return loyaltyPoints;
     }
 
     // --- SETTER METOTLARI ---
+
     public void setLoyaltyPoints(int loyaltyPoints) {
         if (loyaltyPoints < 0) {
             throw new InvalidInputException("Sadakat puanları negatif olamaz.");
@@ -34,6 +37,7 @@ public class Customer extends User{
     }
 
     // Müşterinin mevcut puanına puan eklemek için kullanılan metot.
+
     public void addLoyaltyPoints(int points) {
         if (points <= 0) {
             throw new InvalidInputException("Eklenecek puan 0'dan büyük olmalı.");
@@ -41,6 +45,7 @@ public class Customer extends User{
         this.loyaltyPoints += points;
     }
 
+    // User'dan kalıtılan metot (Kullanıcının bilgilerini döndürür)
     @Override
     public String displayInfo() {
         return "Müşteri Adı: " + getFirstName() + " " + getLastName() +
@@ -49,6 +54,7 @@ public class Customer extends User{
                 " | Sadakat Puanı: " + loyaltyPoints;
     }
 
+    // User'dan kalıtılan metot (Kullanıcının rolünü döndürür)
     @Override
     public String getRole() {
         return "Müşteri";

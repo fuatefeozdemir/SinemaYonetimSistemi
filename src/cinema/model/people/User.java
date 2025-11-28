@@ -1,4 +1,4 @@
-package cinema.model;
+package cinema.model.people;
 
 import cinema.exception.InvalidInputException;
 
@@ -12,7 +12,6 @@ public abstract class User {
     private LocalDate dateOfBirth;
 
     public User(String firstName, String lastName, String email, LocalDate dateOfBirth) {
-        // Constructor'da setter metotları çağrılarak gerekli kontrollerin yapılması sağlanır.
         setFirstName(firstName);
         setLastName(lastName);
         setEmail(email);
@@ -20,6 +19,7 @@ public abstract class User {
     }
 
     // --- GETTER METOTLARI ---
+
     public String getFirstName() {
         return firstName;
     }
@@ -34,6 +34,7 @@ public abstract class User {
     }
 
     // --- SETTER METOTLARI ---
+
     public void setFirstName(String firstName) {
         if (firstName == null) {
             throw new InvalidInputException("İsim null olamaz.");
@@ -63,16 +64,16 @@ public abstract class User {
         // Time sınıfındaki bu metot ile 2 tarih arasındaki yıl sayısı bulunarak yaş değişkeni oluşturulur.
         long age = ChronoUnit.YEARS.between(dateOfBirth, LocalDate.now());
 
-        // Kullanıcının yaşının gerekli yaştan büyük olup olmama durumuna bakılır.
+        // Kullanıcının yaşının gerekli yaştan büyük olup olmama durumu kontrol edilir.
         if (age < 16) {
             throw new InvalidInputException("Kullanıcı yaşı 16'dan küçük olamaz.");
         }
         this.dateOfBirth = dateOfBirth;
     }
 
-    // Kullanıcının verilerinin gerekli formatta gösterilmesini sağlar.
+    // Kullanıcının verilerinin override edilen formatta gösterilmesini sağlar.
     public abstract String displayInfo();
 
-    // Kullanıcının rolünün(Çalışan/Müşteri) döndürülmesini sağlar.
+    // Kullanıcının rolünün(Yönetici/Kasiyer/Müşteri) döndürülmesini sağlar.
     public abstract String getRole();
 }

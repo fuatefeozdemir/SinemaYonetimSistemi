@@ -1,11 +1,11 @@
-package cinema.model;
+package cinema.model.people;
 
 import cinema.exception.InvalidInputException;
 
 import java.time.LocalDate;
 
-public class Cashier extends Personnel{
-    private int dailyCount; // Günlük yapılan bilet satışını ifade eden değişken.
+public class Cashier extends Personnel {
+    private int dailyCount; // Günlük yapılan bilet satışı
 
     public Cashier(String firstName, String lastName, String email, LocalDate dateOfBirth,
                    int staffId, double hourlyRate, boolean isFullTime, LocalDate hireDate) {
@@ -15,11 +15,13 @@ public class Cashier extends Personnel{
     }
 
     // --- GETTER METOTLARI ---
+
     public int getDailyCount() {
         return dailyCount;
     }
 
     // --- SETTER METOTLARI ---
+
     public void setDailyCount(int dailyCount) {
         if(dailyCount < 0) {
             throw new InvalidInputException("Günlük bilet satışı sayısı negatif olamaz.");
@@ -48,8 +50,7 @@ public class Cashier extends Personnel{
     // Personnel'den kalıtılan metot (Maaş hesaplama)
     @Override
     public double calculateMonthlySalary() {
-        // Koşullu İşleç kullanımıyla eğer yarı zamanlıysa saati azaltma
-
+        // Part time çalışıp çalışmama durumu kontrol edilir
         double effectiveHours = isFullTime() ? FULL_TIME_HOURS : PART_TIME_HOURS;
         return getHourlyRate() * effectiveHours;
     }
