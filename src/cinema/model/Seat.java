@@ -3,14 +3,14 @@ package cinema.model;
 import cinema.exception.SeatOccupiedException;
 
 public class Seat {
-    private final int row; // Koltuğun satır ve sütun değişkenleri oluşturulduktan sonra değişmeyeceği için final.
+    private final int row; // Koltuğun satır ve sütun değişkenleri oluşturulduktan sonra değişmeyeceği için final
     private final int column;
-    private boolean isTaken; // Koltuğun dolup olup olmadığını tutan değişken.
+    private boolean isTaken; // Koltuk dolu mu
 
     public Seat(int row, int column) {
         this.row = row;
         this.column = column;
-        this.isTaken = false; // Başlangıçta tüm koltuklar boştur
+        this.isTaken = false; // Başlangıçta tüm koltuklar boş olacağından false
     }
 
     // --- GETTERLAR ---

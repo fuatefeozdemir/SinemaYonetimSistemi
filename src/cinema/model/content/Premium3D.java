@@ -4,9 +4,7 @@ import java.time.LocalDate;
 
 public class Premium3D extends Film {
 
-    // alan eklenecek
-
-    private static final double PREMIUM_PRICE_MULTIPLIER = 1.2;
+    private static final double PREMIUM_PRICE_MULTIPLIER = 1.2; // 3D filmler daha pahalı olduğu için fiyat çarpanı değişkeni
 
     public Premium3D(String title, int durationMinutes, boolean isVisible,
                      LocalDate releaseDate, String director, String ageRestriction, String genre, String language, float imdbRating) {

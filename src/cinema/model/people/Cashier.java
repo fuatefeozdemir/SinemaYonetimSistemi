@@ -33,21 +33,12 @@ public class Cashier extends Personnel {
         this.dailyCount++;
     }
 
-    // User'dan kalıtılan metot (Kullanıcının bilgilerini döndürür)
-    @Override
-    public String displayInfo() {
-        // super.toString() ile User ve Personnel bilgilerine erişilebilir.
-        return super.toString() + " | Staff ID: " + getStaffID() +
-                " | İşe alınma: " + getHireDate() + " | Günlük bilet satışı: " + dailyCount;
-    }
-
-    // User'dan kalıtılan metot (Kullanıcının rolünü döndürür)
     @Override
     public String getRole() {
         return "Kasiyer";
     }
 
-    // Personnel'den kalıtılan metot (Maaş hesaplama)
+    // Maaş hesaplama metotu
     @Override
     public double calculateMonthlySalary() {
         // Part time çalışıp çalışmama durumu kontrol edilir

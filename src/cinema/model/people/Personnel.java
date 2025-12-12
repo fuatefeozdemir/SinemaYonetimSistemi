@@ -6,7 +6,7 @@ import java.time.LocalDate;
 
 public abstract class Personnel extends User {
     private int staffID;
-    private double hourlyRate; // Çalışanın saatli ücreti
+    private double hourlyRate; // Çalışanın saatlik ücreti
     private boolean isFullTime; // Çalışanın part time çalışıp çalışmama durumu
     private LocalDate hireDate; // Çalışanın işe alım tarihi
 
@@ -59,12 +59,12 @@ public abstract class Personnel extends User {
     }
 
     public void setHireDate(LocalDate hireDate) {
-        if (hireDate.isAfter(LocalDate.now())) { // Karşılaştırma
+        if (hireDate.isAfter(LocalDate.now())) {
             throw new InvalidInputException("İşe alım tarihi gelecekte olamaz.");
         }
         this.hireDate = hireDate;
     }
 
-    // Aylık ücreti hesaplayan metot
+    // Çalışanın aylık ücretini hesaplayan metot
     public abstract double calculateMonthlySalary();
 }

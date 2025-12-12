@@ -4,9 +4,7 @@ import java.time.LocalDate;
 
 public class Animation extends Film {
 
-    // alan eklenecek
-
-    private static final double ANIMATION_PRICE_DISCOUNT = 0.8;
+    private static final double ANIMATION_PRICE_DISCOUNT = 0.8; // Animasyon filmleri normalden daha ucuz olacağı için indirim çarpanı
 
     public Animation(String title, int durationMinutes, boolean isVisible,
                      LocalDate releaseDate, String director, String ageRestriction, String genre, String language, float imdbRating) {

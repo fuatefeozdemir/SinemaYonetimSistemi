@@ -6,6 +6,8 @@ import cinema.service.PricedContent;
 import java.time.LocalDate;
 
 public abstract class Film extends Media implements PricedContent {
+
+    // Film bilgileri olarak gözükecek değişkenler
     private LocalDate releaseDate;
     private String director;
     private String ageRestriction;
@@ -48,7 +50,6 @@ public abstract class Film extends Media implements PricedContent {
 
     // --- SETTER METOTLARI ---
 
-
     public void setReleaseDate(LocalDate releaseDate) {
         if (releaseDate == null || releaseDate.isAfter(LocalDate.now())) {
             throw new InvalidInputException("Vizyon tarihi null veya gelecekte olamaz.");
@@ -57,7 +58,7 @@ public abstract class Film extends Media implements PricedContent {
     }
     public void setDirector(String director) {
         if (director == null) {
-            throw new InvalidInputException("Direktör null olamaz.");
+            throw new InvalidInputException("Yönetmen null olamaz.");
         }
         this.director = director;
     }
@@ -86,10 +87,11 @@ public abstract class Film extends Media implements PricedContent {
         this.imdbRating = imdbRating;
     }
 
+    // PricedContent arayüzünden override edilir
     @Override
     public abstract double calculatePrice(boolean isDiscounted);
 
-    // Film türünü (Standard, Premium, Animasyon) döndürür
+    // Filmden kalıtılan alt sınıflarda filmin tipini (Standard, Premium, Animasyon) döndürür
     public abstract String getFilmType();
 
 }

@@ -5,15 +5,15 @@ import cinema.exception.InvalidInputException;
 public abstract class Media {
     private static int mediaCount = 0; // Medya sayısı 0'dan başlar
 
-    private final String mediaId;
-    private String title;
-    private int durationMinutes;
+    private final String mediaId; // Medyanın kodu
+    private String title; // Medyanın ismi
+    private int durationMinutes; // Medyanın süresi
     private boolean isVisible; // Medya gösterimde mi
 
     public Media(String title, int durationMinutes, boolean isVisible) {
         mediaCount++;
 
-        this.mediaId = String.format("M%03d", Media.mediaCount);
+        this.mediaId = String.format("M%03d", Media.mediaCount); // Medya kodlarının M001 formatında yazılmasını sağlar
         setTitle(title);
         setDurationMinutes(durationMinutes);
         setVisible(isVisible);
@@ -57,11 +57,7 @@ public abstract class Media {
         this.isVisible = isVisible;
     }
 
-    // Medya türünü (Film/Fragman/Reklam) döndürür
+    // Medyadan kalıtılan alt sınıflarda medya tipini (Film/Fragman/Reklam) döndürür
     public abstract String getMediaType();
 
-    @Override
-    public String toString() {
-        return "ID: " + mediaId + ", Başlık: " + title + ", Süre: " + durationMinutes + " dk.";
-    }
 }

@@ -45,16 +45,6 @@ public class Customer extends User {
         this.loyaltyPoints += points;
     }
 
-    // User'dan kalıtılan metot (Kullanıcının bilgilerini döndürür)
-    @Override
-    public String displayInfo() {
-        return "Müşteri Adı: " + getFirstName() + " " + getLastName() +
-                " | E-posta: " + getEmail() +
-                " | Doğum Tarihi: " + getDateOfBirth() +
-                " | Sadakat Puanı: " + loyaltyPoints;
-    }
-
-    // User'dan kalıtılan metot (Kullanıcının rolünü döndürür)
     @Override
     public String getRole() {
         return "Müşteri";

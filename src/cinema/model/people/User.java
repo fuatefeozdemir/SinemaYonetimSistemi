@@ -6,6 +6,8 @@ import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 
 public abstract class User {
+
+    // Kullanıcı bilgilerini tutacak değişkenler
     private String firstName;
     private String lastName;
     private String email;
@@ -64,16 +66,12 @@ public abstract class User {
         // Time sınıfındaki bu metot ile 2 tarih arasındaki yıl sayısı bulunarak yaş değişkeni oluşturulur.
         long age = ChronoUnit.YEARS.between(dateOfBirth, LocalDate.now());
 
-        // Kullanıcının yaşının gerekli yaştan büyük olup olmama durumu kontrol edilir.
         if (age < 16) {
             throw new InvalidInputException("Kullanıcı yaşı 16'dan küçük olamaz.");
         }
         this.dateOfBirth = dateOfBirth;
     }
 
-    // Kullanıcının verilerinin override edilen formatta gösterilmesini sağlar.
-    public abstract String displayInfo();
-
-    // Kullanıcının rolünün(Yönetici/Kasiyer/Müşteri) döndürülmesini sağlar.
+    // User sınıfından kalıtılan alt sınıflarda kullanıcı tipinin (Yönetici/Kasiyer/Müşteri) döndürür
     public abstract String getRole();
 }

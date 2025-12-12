@@ -3,9 +3,9 @@ package cinema.model;
 import cinema.exception.InvalidInputException;
 
 public class Hall {
-    private final String hallName;   // Salon adı
-    private final int rowCount;      // Satır sayısı
-    private final int columnCount;   // Sütun sayısı
+    private final String hallName; // Salon adı
+    private final int rowCount; // Satır sayısı
+    private final int columnCount; // Sütun sayısı
 
     public Hall(String hallName, int rowCount, int columnCount) {
         if (rowCount <= 0 || columnCount <= 0) {

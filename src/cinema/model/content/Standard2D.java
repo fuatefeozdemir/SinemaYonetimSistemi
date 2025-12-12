@@ -4,8 +4,6 @@ import java.time.LocalDate;
 
 public class Standard2D extends Film {
 
-    // alan eklenecek
-
     public Standard2D(String title, int durationMinutes, boolean isVisible,
                       LocalDate releaseDate, String director, String ageRestriction, String genre, String language, float imdbRating) {
         super(title, durationMinutes, isVisible, releaseDate, director, ageRestriction, genre, language, imdbRating);

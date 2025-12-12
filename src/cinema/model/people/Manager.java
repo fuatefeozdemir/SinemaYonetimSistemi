@@ -41,26 +41,18 @@ public class Manager extends Personnel {
         this.responsibleHalls = responsibleHalls;
     }
 
-    // User'dan kalıtılan metot (Kullanıcının bilgilerini döndürür)
-    @Override
-    public String displayInfo() {
-        return super.toString() + " | Rol: Yönetici" +
-                " | Sorumlu Salon Sayısı: " + responsibleHalls;
-    }
-
-    // User'dan kalıtılan metot (Kullanıcının rolünü döndürür)
     @Override
     public String getRole() {
         return "Yönetici";
     }
 
-    // Personnel'den kalıtılan metot (Maaş hesaplama)
+    // Maaş hesaplama metotu
     @Override
     public double calculateMonthlySalary() {
         // Part time çalışıp çalışmama durumu kontrol edilir
         double effectiveHours = isFullTime() ? FULL_TIME_HOURS : PART_TIME_HOURS;
 
-        // Yöneticinin saatlik ücretini katsayı ile çarparak maaşı hesaplar.
+        // Yöneticinin saatlik ücreti katsayı ile çarpılarak maaşı hesaplanır
         return (getHourlyRate() * MANAGER_RATE_MULTIPLIER) * effectiveHours;
     }
 }
