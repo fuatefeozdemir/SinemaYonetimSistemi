@@ -1,7 +1,7 @@
 package cinema.service;
 
 public interface PricedContent {
-    int BASE_TICKET_PRICE = 100; // Biletlerin indirimsiz ve zamsız ücreti
+    double BASE_TICKET_PRICE = 100;
 
     double calculatePrice(boolean isDiscounted);
 }

@@ -7,9 +7,9 @@ import java.time.LocalDate;
 public class Cashier extends Personnel {
     private int dailyCount; // Günlük yapılan bilet satışı
 
-    public Cashier(String firstName, String lastName, String email, LocalDate dateOfBirth,
+    public Cashier(String firstName, String lastName, String email, LocalDate dateOfBirth, String password,
                    int staffId, double hourlyRate, boolean isFullTime, LocalDate hireDate) {
-        super(firstName, lastName, email, dateOfBirth, staffId, hourlyRate, isFullTime, hireDate);
+        super(firstName, lastName, email, dateOfBirth,password, staffId, hourlyRate, isFullTime, hireDate);
 
         this.dailyCount = 0; // Günlük satış sayısı 0'dan başlatılır
     }

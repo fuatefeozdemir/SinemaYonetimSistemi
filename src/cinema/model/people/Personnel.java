@@ -14,9 +14,9 @@ public abstract class Personnel extends User {
     public static final double FULL_TIME_HOURS = 160.0;
     public static final double PART_TIME_HOURS = 80.0;
 
-    public Personnel(String firstName, String lastName, String email, LocalDate dateOfBirth,
+    public Personnel(String firstName, String lastName, String email, LocalDate dateOfBirth, String password,
                      int staffId, double hourlyRate, boolean isFullTime, LocalDate hireDate) {
-        super(firstName, lastName, email, dateOfBirth);
+        super(firstName, lastName, email, dateOfBirth, password);
         setStaffID(staffId);
         setHourlyRate(hourlyRate);
         setFullTime(isFullTime);

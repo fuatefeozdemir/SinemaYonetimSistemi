@@ -8,15 +8,15 @@ public class Customer extends User {
     private int loyaltyPoints;
 
     // Varsayılan Constructor (Puan 0'dan başlar)
-    public Customer(String firstName, String lastName, String email, LocalDate dateOfBirth) {
-        super(firstName, lastName, email, dateOfBirth);
+    public Customer(String firstName, String lastName, String email, LocalDate dateOfBirth, String password) {
+        super(firstName, lastName, email, dateOfBirth, password);
         // Setter'ı kullanarak 0 ataması yapılır.
         setLoyaltyPoints(0);
     }
 
     // Constructor (Overloading) (Veri yükleme senaryosunda kullanılır.)
-    public Customer(String firstName, String lastName, String email, LocalDate dateOfBirth, int loyaltyPoints) {
-        super(firstName, lastName, email, dateOfBirth);
+    public Customer(String firstName, String lastName, String email, LocalDate dateOfBirth, String password, int loyaltyPoints) {
+        super(firstName, lastName, email, dateOfBirth, password);
 
         setLoyaltyPoints(loyaltyPoints);
     }

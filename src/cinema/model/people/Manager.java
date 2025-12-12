@@ -10,17 +10,17 @@ public class Manager extends Personnel {
     private static final double MANAGER_RATE_MULTIPLIER = 1.5; // Yöneticinin maaş katsayısı sabiti
 
     // Varsayılan Constructor (Puan 0'dan başlar)
-    public Manager(String firstName, String lastName, String email, LocalDate dateOfBirth,
+    public Manager(String firstName, String lastName, String email, LocalDate dateOfBirth, String password,
                    int staffId, double hourlyRate, boolean isFullTime, LocalDate hireDate) {
-        super(firstName, lastName, email, dateOfBirth, staffId, hourlyRate, isFullTime, hireDate);
+        super(firstName, lastName, email, dateOfBirth, password, staffId, hourlyRate, isFullTime, hireDate);
 
         this.responsibleHalls = 0;
     }
 
     // Constructor (Overloading)
-    public Manager(String firstName, String lastName, String email, LocalDate dateOfBirth,
+    public Manager(String firstName, String lastName, String email, LocalDate dateOfBirth, String password,
                    int staffId, double hourlyRate, boolean isFullTime, LocalDate hireDate, int responsibleHalls) {
-        super(firstName, lastName, email, dateOfBirth, staffId, hourlyRate, isFullTime, hireDate);
+        super(firstName, lastName, email, dateOfBirth,password, staffId, hourlyRate, isFullTime, hireDate);
 
         this.responsibleHalls = responsibleHalls;
     }

@@ -12,12 +12,14 @@ public abstract class User {
     private String lastName;
     private String email;
     private LocalDate dateOfBirth;
+    private String password;
 
-    public User(String firstName, String lastName, String email, LocalDate dateOfBirth) {
+    public User(String firstName, String lastName, String email, LocalDate dateOfBirth, String password) {
         setFirstName(firstName);
         setLastName(lastName);
         setEmail(email);
         setDateOfBirth(dateOfBirth);
+        this.password = password;
     }
 
     // --- GETTER METOTLARI ---
@@ -33,6 +35,9 @@ public abstract class User {
     }
     public LocalDate getDateOfBirth() {
         return dateOfBirth;
+    }
+    public String getPassword() {
+        return password;
     }
 
     // --- SETTER METOTLARI ---
@@ -70,6 +75,11 @@ public abstract class User {
             throw new InvalidInputException("Kullanıcı yaşı 16'dan küçük olamaz.");
         }
         this.dateOfBirth = dateOfBirth;
+    }
+
+    public void setPassword(String password) {
+
+        this.password = password;
     }
 
     // User sınıfından kalıtılan alt sınıflarda kullanıcı tipinin (Yönetici/Kasiyer/Müşteri) döndürür
