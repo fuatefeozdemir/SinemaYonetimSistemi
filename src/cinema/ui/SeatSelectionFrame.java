@@ -14,6 +14,10 @@ public class SeatSelectionFrame extends JFrame {
     private String movieTitle;
     private List<String> selectedSeats = new ArrayList<>();
     private int mouseX, mouseY;
+    private JLabel lblSummary;
+    private final double TICKET_PRICE = 150.0;
+    private String selectedSession = "Bugün - 20:00";
+    private JComboBox<String> cmbSession;
 
     // --- RENK PALETİ ---
     private final Color COLOR_BG = new Color(33, 33, 33);
@@ -148,7 +152,7 @@ public class SeatSelectionFrame extends JFrame {
     private void initFooter() {
         JPanel footerPanel = new JPanel();
         footerPanel.setBackground(COLOR_BG);
-        footerPanel.setPreferredSize(new Dimension(950, 80));
+        footerPanel.setPreferredSize(new Dimension(950, 120));
         footerPanel.setLayout(null);
         contentPane.add(footerPanel, BorderLayout.SOUTH);
 
@@ -156,8 +160,38 @@ public class SeatSelectionFrame extends JFrame {
         createLegendItem(footerPanel, COLOR_SEAT_FULL, "Dolu", 130);
         createLegendItem(footerPanel, COLOR_SEAT_SELECTED, "Seçili", 210);
 
+        String[] sessions = {
+                "Bugün - 18:00",
+                "Bugün - 20:00",
+                "Bugün - 22:00",
+                "Yarın - 18:00",
+                "Yarın - 20:00",
+                "Yarın - 22:00"
+        };
+
+        cmbSession = new JComboBox<>(sessions);
+        cmbSession.setBounds(320, 45, 250, 30);
+        cmbSession.setBackground(new Color(45,45,45));
+        cmbSession.setForeground(Color.WHITE);
+        cmbSession.setFocusable(false);
+        footerPanel.add(cmbSession);
+        selectedSession = (String) cmbSession.getSelectedItem();
+
+        cmbSession.addActionListener(e -> {
+            selectedSession = (String) cmbSession.getSelectedItem();
+            updateSummaryLabel();
+        });
+
+        lblSummary = new JLabel();
+        lblSummary.setForeground(Color.LIGHT_GRAY);
+        lblSummary.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        lblSummary.setBounds(320, 15, 560, 25);
+        footerPanel.add(lblSummary);
+
+        updateSummaryLabel();
+
         JButton btnConfirm = new JButton("SEÇİMİ ONAYLA");
-        btnConfirm.setBounds(700, 20, 200, 40);
+        btnConfirm.setBounds(700, 35, 200, 40);
         btnConfirm.setBackground(COLOR_ACCENT);
         btnConfirm.setForeground(Color.WHITE);
         btnConfirm.setFont(new Font("Segoe UI", Font.BOLD, 14));
@@ -174,7 +208,7 @@ public class SeatSelectionFrame extends JFrame {
 
                 // Seçilen koltukları PaymentFrame'e gönderiyoruz
                 // NOT: PaymentFrame constructor'ı ArrayList bekliyorsa List'i çeviriyoruz.
-                PaymentFrame paymentFrame = new PaymentFrame(movieTitle, new ArrayList<>(selectedSeats));
+                PaymentFrame paymentFrame = new PaymentFrame(movieTitle, new ArrayList<>(selectedSeats), selectedSession);
                 paymentFrame.setVisible(true);
 
                 // Koltuk ekranını kapat
@@ -231,6 +265,7 @@ public class SeatSelectionFrame extends JFrame {
             btn.addActionListener(e -> {
                 if (btn.isSelected()) selectedSeats.add(seatNo);
                 else selectedSeats.remove(seatNo);
+                updateSummaryLabel();
                 btn.repaint();
             });
         }
@@ -258,4 +293,20 @@ public class SeatSelectionFrame extends JFrame {
         lbl.setBounds(x + 25, 30, 50, 20);
         panel.add(lbl);
     }
+
+    private void updateSummaryLabel() {
+        if (selectedSeats.isEmpty()) {
+            lblSummary.setText("Koltuk seçilmedi");
+        } else {
+            int count = selectedSeats.size();
+            double total = count * TICKET_PRICE;
+
+            lblSummary.setText(
+                    "Seçilen: " + String.join(", ", selectedSeats)
+                            + " | " + count + " koltuk"
+                            + " | " + total + " TL"
+            );
+        }
+    }
+
 }
