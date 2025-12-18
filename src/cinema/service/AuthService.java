@@ -1,11 +1,14 @@
 package cinema.service;
 
+import cinema.exception.AlreadyExistException;
 import cinema.exception.AuthenticationException;
 import cinema.exception.InvalidInputException;
 import cinema.model.people.User;
+import cinema.storage.UserRepository;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.NoSuchElementException;
 
 public class AuthService {
 
@@ -45,4 +48,31 @@ public class AuthService {
     public User getCurrentUser() {
         return currentUser;
     }
+
+    private void createNewUser(User user) {
+        User dbUser = getUser(user.getEmail());
+        if (dbUser != null) {
+            throw new AlreadyExistException("Kullanıcı zaten mevcut.");
+        }
+        UserRepository.saveUser(user);
+    }
+
+
+    private void updateUser(User user) {
+        User dbUser = getUser(user.getEmail());
+        if (dbUser == null) {
+            throw new NoSuchElementException("Kullanıcı güncellemesi başarısız. Kullanıcı bulunamadı.");
+        }
+        UserRepository.updateUser(user);
+    }
+
+
+    private void deleteUser(String email) {
+        UserRepository.deleteUser(email);
+    }
+
+    private User getUser(String email) {
+        return UserRepository.getUser(email);
+    }
+
 }

@@ -49,4 +49,11 @@ public class Customer extends User {
     public String getRole() {
         return "Müşteri";
     }
+
+    @Override
+    public String toString() {
+        return "Customer{" +
+                "loyaltyPoints=" + loyaltyPoints +
+                '}';
+    }
 }
