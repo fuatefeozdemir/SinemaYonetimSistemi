@@ -82,7 +82,7 @@ public class Ticket {
     @Override
     public String toString() {
         return "Bilet ID: " + ticketId +
-                ", Film: " + session.getFilm().getTitle() +
+                ", Film: " + session.getFilm().getName() +
                 ", Koltuk: " + seat.getSeatCode() +
                 ", Fiyat: " + finalPrice + " TL" +
                 ", Saat: " + purchaseTime.format(java.time.format.DateTimeFormatter.ofPattern("HH:mm"));

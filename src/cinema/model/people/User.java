@@ -8,6 +8,7 @@ import java.time.temporal.ChronoUnit;
 public abstract class User {
 
     // Kullanıcı bilgilerini tutacak değişkenler
+    private String id;
     private String firstName;
     private String lastName;
     private String email;
@@ -20,6 +21,14 @@ public abstract class User {
         setEmail(email);
         setDateOfBirth(dateOfBirth);
         this.password = password;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
     }
 
     // --- GETTER METOTLARI ---
