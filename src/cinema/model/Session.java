@@ -1,6 +1,7 @@
 package cinema.model;
 
 import cinema.exception.InvalidInputException;
+import cinema.exception.SeatOccupiedException;
 import cinema.model.content.Media;
 
 import java.time.LocalDateTime;
@@ -13,7 +14,7 @@ public class Session {
     private final LocalDateTime startTime;
     private final LocalDateTime endTime;
 
-    private final Seat[][] seats; // Koltuk matrisi
+    private final boolean[][] seats;
 
     public Session(String sessionId, Hall hall, Media film, LocalDateTime startTime, LocalDateTime endTime) {
         if (hall == null || film == null || startTime == null || endTime == null) {
@@ -30,74 +31,82 @@ public class Session {
         this.startTime = startTime;
         this.endTime = endTime;
 
-        // Koltuk matrisini oluştur
-        seats = new Seat[hall.getRowCount()][hall.getColumnCount()];
-        initializeSeats();
+        // Salon kapasitesine göre matrisi başlat (Default hepsi false yani boş)
+        this.seats = new boolean[hall.getRowCount()][hall.getColumnCount()];
     }
 
-    // Seansın hangi salonda olduğuna göre her koltuk için nesne oluşturur
-    private void initializeSeats() {
-        for (int r = 0; r < hall.getRowCount(); r++) {
-            for (int c = 0; c < hall.getColumnCount(); c++) {
-                seats[r][c] = new Seat(r, c);
-            }
-        }
-    }
-
-    public Seat getSeat(int row, int column) {
-        if (row < 0 || row >= hall.getRowCount() || column < 0 || column >= hall.getColumnCount()) {
-            throw new InvalidInputException("Koltuk salon sınırlarının dışında!");
-        }
-        return seats[row][column];
-    }
-
-    public Seat getSeat(String seatCode) {
-        seatCode = seatCode.toUpperCase().trim();
-        char rowLetter = seatCode.charAt(0);
-        int row = rowLetter - 'A';
-        int column = Integer.parseInt(seatCode.substring(1));
-        return getSeat(row, column);
-    }
+    // --- KOLTUK YÖNETİM METODLARI ---
 
     public void reserveSeat(String seatCode) {
-        Seat seat = getSeat(seatCode);
-        seat.reserve();
+        int[] coords = decodeSeatCode(seatCode);
+        int r = coords[0];
+        int c = coords[1];
+
+        if (seats[r][c]) {
+            throw new SeatOccupiedException(seatCode + " koltuğu zaten dolu!");
+        }
+        seats[r][c] = true;
     }
 
     public void freeSeat(String seatCode) {
-        Seat seat = getSeat(seatCode);
-        seat.free();
+        int[] coords = decodeSeatCode(seatCode);
+        seats[coords[0]][coords[1]] = false;
+    }
+
+    public boolean isSeatTaken(String seatCode) {
+        int[] coords = decodeSeatCode(seatCode);
+        return seats[coords[0]][coords[1]];
+    }
+
+    // "A1" gibi kodları matris indislerine (0,0) çevirir
+    private int[] decodeSeatCode(String seatCode) {
+        try {
+            seatCode = seatCode.toUpperCase().trim();
+            int row = seatCode.charAt(0) - 'A';
+            int col = Integer.parseInt(seatCode.substring(1)) - 1;
+
+            if (row < 0 || row >= hall.getRowCount() || col < 0 || col >= hall.getColumnCount()) {
+                throw new InvalidInputException("Koltuk salon sınırlarının dışında: " + seatCode);
+            }
+            return new int[]{row, col};
+        } catch (Exception e) {
+            throw new InvalidInputException("Geçersiz koltuk kodu formatı: " + seatCode);
+        }
     }
 
     public int getAvailableSeatsCount() {
         int count = 0;
-        for (int r = 0; r < hall.getRowCount(); r++) {
-            for (int c = 0; c < hall.getColumnCount(); c++) {
-                if (!seats[r][c].isTaken()) count++;
+        for (boolean[] row : seats) {
+            for (boolean isTaken : row) {
+                if (!isTaken) count++;
             }
         }
         return count;
     }
 
-
-    // GETTERLAR
+    // --- GETTERLAR ---
 
     public String getSessionId() {
         return sessionId;
     }
-    public Hall getHall() { return hall;
+
+    public Hall getHall() {
+        return hall;
     }
+
     public Media getFilm() {
         return film;
     }
+
     public LocalDateTime getStartTime() {
         return startTime;
     }
+
     public LocalDateTime getEndTime() {
         return endTime;
     }
-    public Seat[][] getSeats() {
+
+    public boolean[][] getSeats() {
         return seats;
     }
-
 }
