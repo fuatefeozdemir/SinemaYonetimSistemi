@@ -198,21 +198,39 @@ public class H2UserRepository implements UserRepository {
 
     @Override
     public void deleteUser(String email) {
-        String sql = "DELETE FROM users WHERE email = ?";
+        // Önce bağımlı kayıtları (biletleri) silmemiz gerekiyor
+        String deleteTicketsSql = "DELETE FROM tickets WHERE customer_email = ?";
+        String deleteUserSql = "DELETE FROM users WHERE email = ?";
 
-        try (Connection conn = DriverManager.getConnection(URL);
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+        try (Connection conn = DriverManager.getConnection(URL)) {
+            // İşlemlerin güvenliği için transaction başlatıyoruz
+            conn.setAutoCommit(false);
 
-            pstmt.setString(1, email);
-            int affectedRows = pstmt.executeUpdate();
+            try (PreparedStatement pstmtTickets = conn.prepareStatement(deleteTicketsSql);
+                 PreparedStatement pstmtUser = conn.prepareStatement(deleteUserSql)) {
 
-            if (affectedRows > 0) {
-                System.out.println(email + " adresine sahip kullanıcı başarıyla silindi.");
-            } else {
-                System.out.println("Kullanıcı bulunamadı.");
+                // 1. Adım: Kullanıcıya ait biletleri temizle
+                pstmtTickets.setString(1, email);
+                pstmtTickets.executeUpdate();
+
+                // 2. Adım: Kullanıcıyı sil
+                pstmtUser.setString(1, email);
+                int affectedRows = pstmtUser.executeUpdate();
+
+                if (affectedRows > 0) {
+                    conn.commit(); // Her iki işlem de başarılıysa onayla
+                    System.out.println(email + " has been successfully deleted along with their tickets.");
+                } else {
+                    conn.rollback(); // Kullanıcı bulunamazsa işlemleri geri al
+                    System.out.println("User not found.");
+                }
+
+            } catch (SQLException e) {
+                conn.rollback(); // Herhangi bir hatada tüm değişiklikleri iptal et
+                System.err.println("Delete error: " + e.getMessage());
             }
         } catch (SQLException e) {
-            System.err.println("Silme hatası: " + e.getMessage());
+            System.err.println("Database connection error: " + e.getMessage());
         }
     }
 

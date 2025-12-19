@@ -1,6 +1,7 @@
 package cinema.cinemaApp;
 
 import cinema.H2.H2TicketRepository;
+import cinema.repository.UserRepository;
 import cinema.service.AuthService;
 import cinema.H2.H2UserRepository;
 import cinema.service.TicketService;
