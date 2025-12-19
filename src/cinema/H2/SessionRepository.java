@@ -1,12 +1,9 @@
-package cinema.storage;
+package cinema.H2;
 
 import cinema.model.Session;
 import cinema.model.Hall;
 import cinema.model.content.Media;
 import java.sql.*;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 
 public class SessionRepository {
     private static final String URL = "jdbc:h2:./data/CINEMA_DB;AUTO_SERVER=TRUE;DB_CLOSE_DELAY=-1";
@@ -62,7 +59,7 @@ public class SessionRepository {
             pstmt.setString(3, session.getFilm().getName());
             pstmt.setTimestamp(4, Timestamp.valueOf(session.getStartTime()));
             pstmt.setTimestamp(5, Timestamp.valueOf(session.getEndTime()));
-            pstmt.setString(6, serializeSeats(session.getSeats()));
+//            pstmt.setString(6, serializeSeats(session.getSeats()));
 
             pstmt.executeUpdate();
         } catch (SQLException e) {
@@ -92,7 +89,7 @@ public class SessionRepository {
                 );
 
                 // Kayıtlı koltuk verisini matrise işle
-                deserializeSeats(rs.getString("seat_data"), session.getSeats());
+//                deserializeSeats(rs.getString("seat_data"), boolean[][]);
                 return session;
             }
         } catch (SQLException e) {
@@ -101,15 +98,15 @@ public class SessionRepository {
         return null;
     }
 
-    public static void updateSeats(Session session) {
-        String sql = "UPDATE sessions SET seat_data = ? WHERE session_id = ?";
-        try (Connection conn = DriverManager.getConnection(URL);
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setString(1, serializeSeats(session.getSeats()));
-            pstmt.setString(2, session.getSessionId());
-            pstmt.executeUpdate();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-    }
+//    public static void updateSeats(Session session) {
+//        String sql = "UPDATE sessions SET seat_data = ? WHERE session_id = ?";
+//        try (Connection conn = DriverManager.getConnection(URL);
+//             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+//            pstmt.setString(1, serializeSeats(session.getSeats()));
+//            pstmt.setString(2, session.getSessionId());
+//            pstmt.executeUpdate();
+//        } catch (SQLException e) {
+//            e.printStackTrace();
+//        }
+//    }
 }

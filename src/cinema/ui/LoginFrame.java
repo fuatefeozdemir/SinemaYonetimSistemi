@@ -1,7 +1,8 @@
 package cinema.ui;
 
 import cinema.service.AuthService;
-// Eğer User entity'niz varsa buraya import etmelisiniz, örn: import cinema.entity.User;
+import cinema.model.people.User;
+import cinema.service.TicketService;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -12,6 +13,7 @@ import java.awt.event.*;
 public class LoginFrame extends JFrame {
 
     private final AuthService authService;
+    private final TicketService ticketService;
 
     private JPanel contentPane;
     private JTextField txtUsername;
@@ -24,24 +26,12 @@ public class LoginFrame extends JFrame {
     private final Color COLOR_TEXT = new Color(240, 240, 240);
     private final Color COLOR_INPUT_BORDER = Color.GRAY;
 
-    // --- MAIN METODU (TEST İÇİN) ---
-    public static void main(String[] args) {
-        EventQueue.invokeLater(() -> {
-            try {
-                // TEST İÇİN: Null yerine geçici bir anonim sınıf veya mock gönderebiliriz.
-                // Şimdilik null bırakıyorum ama gerçek entegrasyonda burası ApplicationContext'ten gelecek.
-                LoginFrame frame = new LoginFrame(null);
-                frame.setVisible(true);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        });
-    }
 
     // --- CONSTRUCTOR ---
-    public LoginFrame(AuthService authService) {
+    public LoginFrame(AuthService authService, TicketService ticketService) {
+        // null kontrolü: Dışarıdan gelmezse yeni yarat
         this.authService = authService;
-
+        this.ticketService = ticketService;
         setUndecorated(true);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setBounds(100, 100, 450, 600);
@@ -66,7 +56,6 @@ public class LoginFrame extends JFrame {
         contentPane.add(headerPanel);
         headerPanel.setLayout(null);
 
-        // Pencere Sürükleme Mantığı
         headerPanel.addMouseListener(new MouseAdapter() {
             @Override
             public void mousePressed(MouseEvent e) {
@@ -81,7 +70,6 @@ public class LoginFrame extends JFrame {
             }
         });
 
-        // Kapatma Butonu
         JLabel lblClose = new JLabel("X");
         lblClose.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         lblClose.setForeground(Color.WHITE);
@@ -114,7 +102,7 @@ public class LoginFrame extends JFrame {
 
     private void initForm() {
         // Kullanıcı Adı
-        JLabel lblUser = new JLabel("Kullanıcı Adı");
+        JLabel lblUser = new JLabel("E-posta Adresi");
         lblUser.setForeground(COLOR_TEXT);
         lblUser.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         lblUser.setBounds(75, 170, 300, 20);
@@ -147,13 +135,11 @@ public class LoginFrame extends JFrame {
         btnLogin.setFocusPainted(false);
         btnLogin.setBorderPainted(false);
 
-        // Enter tuşu ile giriş yapabilmek için:
         getRootPane().setDefaultButton(btnLogin);
-
         btnLogin.addActionListener(this::handleLogin);
         contentPane.add(btnLogin);
 
-        // Kayıt Linki
+        // Kayıt Linki - GÜNCELLENDİ
         JLabel lblRegister = new JLabel("Hesabın yok mu? Kayıt Ol");
         lblRegister.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         lblRegister.setHorizontalAlignment(SwingConstants.CENTER);
@@ -164,10 +150,10 @@ public class LoginFrame extends JFrame {
         lblRegister.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                // TODO: RegisterFrame entegrasyonu
-                JOptionPane.showMessageDialog(null, "Kayıt ekranı yapım aşamasında.");
-                // new RegisterFrame(authService).setVisible(true);
-                // dispose();
+                // RegisterFrame'e geçiş yap ve mevcut authService'i aktar
+                RegisterFrame registerFrame = new RegisterFrame(authService, ticketService);
+                registerFrame.setVisible(true);
+                dispose(); // Login ekranını kapat
             }
             @Override
             public void mouseEntered(MouseEvent e) { lblRegister.setForeground(COLOR_ACCENT); }
@@ -201,47 +187,51 @@ public class LoginFrame extends JFrame {
         });
     }
 
-    // --- GİRİŞ MANTIĞI ---
     private void handleLogin(ActionEvent e) {
-        String username = txtUsername.getText();
+        String email = txtUsername.getText();
         String password = new String(txtPassword.getPassword());
 
-        if (username.isEmpty() || password.isEmpty()) {
+        if (email.isEmpty() || password.isEmpty()) {
             JOptionPane.showMessageDialog(this, "Lütfen tüm alanları doldurun.", "Uyarı", JOptionPane.WARNING_MESSAGE);
             return;
         }
 
-        // --- HIBERNATE ENTEGRASYONUNDA BURASI DEĞİŞECEK ---
-        // Gerçek senaryoda: User user = authService.login(username, password);
-        // if (user != null) { role kontrolü yap }
+        try {
+            // 1. AuthService aracılığıyla veritabanından kullanıcıyı doğrula
+            User loggedInUser = authService.login(email, password);
 
-        // Şimdilik simülasyon:
-        if ("admin".equals(username) && "123".equals(password)) {
-            openDashboard("Admin Dashboard");
-            // new AdminDashboard().setVisible(true);
-        }
-        else if ("kasiyer".equals(username) && "123".equals(password)) {
-            openDashboard("Kasiyer Ekranı");
-            // new CashierFrame().setVisible(true);
-        }
-        else if ("musteri".equals(username) && "123".equals(password)) {
-            // Müşteri Paneli Açılışı
-            SwingUtilities.invokeLater(() -> {
-                try {
-                    new CustomerMainFrame().setVisible(true);
-                    this.dispose();
-                } catch (Exception ex) {
-                    JOptionPane.showMessageDialog(this, "Arayüz yüklenemedi: " + ex.getMessage());
-                    ex.printStackTrace();
+            if (loggedInUser != null) {
+                // 2. Rol Kontrolü ve Yönlendirme
+                if (loggedInUser instanceof cinema.model.people.Customer) {
+                    // Kullanıcı Customer tipindeyse CustomerMainFrame'e yönlendir
+                    SwingUtilities.invokeLater(() -> {
+                        try {
+                            // CustomerMainFrame'in constructor'ı mevcut kullanıcıyı veya servisi bekleyebilir
+                            new CustomerMainFrame(authService, ticketService).setVisible(true);
+                            this.dispose(); // Giriş ekranını kapat
+                        } catch (Exception ex) {
+                            JOptionPane.showMessageDialog(this, "Müşteri paneli açılırken hata: " + ex.getMessage());
+                        }
+                    });
                 }
-            });
-        }
-        else {
-            JOptionPane.showMessageDialog(this, "Hatalı Kullanıcı Adı veya Şifre", "Hata", JOptionPane.ERROR_MESSAGE);
+                else if (loggedInUser instanceof cinema.model.people.Cashier) {
+                    // Eğer Kasiyer ise ilgili ekranı aç (Henüz yoksa mesaj göster)
+                    JOptionPane.showMessageDialog(this, "Kasiyer Paneli Yükleniyor...");
+                    // new CashierFrame().setVisible(true);
+                    this.dispose();
+                }
+                else {
+                    // Admin veya diğer roller için
+                    JOptionPane.showMessageDialog(this, "Hoşgeldiniz: " + loggedInUser.getFirstName());
+                }
+            }
+
+        } catch (Exception ex) {
+            // Veritabanında kullanıcı bulunamazsa veya şifre yanlışsa burası çalışır
+            JOptionPane.showMessageDialog(this, ex.getMessage(), "Giriş Başarısız", JOptionPane.ERROR_MESSAGE);
         }
     }
 
-    // Geçici yardımcı metod
     private void openDashboard(String title) {
         JOptionPane.showMessageDialog(this, title + " Yükleniyor...");
         this.dispose();

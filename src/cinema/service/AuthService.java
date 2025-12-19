@@ -4,41 +4,51 @@ import cinema.exception.AlreadyExistException;
 import cinema.exception.AuthenticationException;
 import cinema.exception.InvalidInputException;
 import cinema.model.people.User;
-import cinema.storage.UserRepository;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.NoSuchElementException;
+import cinema.repository.UserRepository;
 
 public class AuthService {
 
-    private final List<User> users;
+    private final UserRepository userRepository;
     private User currentUser;
 
-    public AuthService() {
-        this.users = new ArrayList<>();
+    public AuthService(UserRepository userRepository) {
+        this.userRepository = userRepository;
     }
 
+    // UI'dan gelen Register isteği buraya düşer
     public void register(User user) {
         if (user == null) {
-            throw new InvalidInputException("Kayıt edilecek kullanıcı nesnesi boş olamaz.");
+            throw new InvalidInputException("Kullanıcı bilgileri boş olamaz.");
         }
-        this.users.add(user);
+
+        // Önce veritabanında bu e-posta var mı kontrol et
+        User existing = userRepository.getUser(user.getEmail());
+        if (existing != null) {
+            throw new AlreadyExistException("Bu e-posta adresi zaten kayıtlı!");
+        }
+
+        // Veritabanına kaydet
+        userRepository.saveUser(user);
     }
 
+    // UI'dan gelen Login isteği buraya düşer
     public User login(String email, String password) {
         if (email == null || email.isBlank() || password == null || password.isBlank()) {
-            throw new InvalidInputException("E-posta ve şifre alanı boş bırakılamaz.");
+            throw new InvalidInputException("E-posta ve şifre boş bırakılamaz.");
         }
 
-        for (User user : users) {
-            if (user.getEmail().equalsIgnoreCase(email) && user.getPassword().equals(password)) {
-                this.currentUser = user;
-                return user;
-            }
+        // Kullanıcıyı veritabanından e-posta ile çek
+        User user = userRepository.getUser(email);
+
+        // Kullanıcı var mı ve şifre doğru mu?
+        if (user != null && user.getPassword().equals(password)) {
+            this.currentUser = user;
+            return user;
         }
 
-        throw new AuthenticationException("Giriş başarısız! E-posta veya şifre hatalı.");
+
+
+        throw new AuthenticationException("E-posta veya şifre hatalı!");
     }
 
     public void logout() {
@@ -48,31 +58,12 @@ public class AuthService {
     public User getCurrentUser() {
         return currentUser;
     }
-
-    private void createNewUser(User user) {
-        User dbUser = getUser(user.getEmail());
-        if (dbUser != null) {
-            throw new AlreadyExistException("Kullanıcı zaten mevcut.");
-        }
-        UserRepository.saveUser(user);
+    public void updateUser(User user) {
+        userRepository.updateUser(user);
+        User newUser = userRepository.getUser(user.getEmail());
+        this.currentUser = newUser;
     }
-
-
-    private void updateUser(User user) {
-        User dbUser = getUser(user.getEmail());
-        if (dbUser == null) {
-            throw new NoSuchElementException("Kullanıcı güncellemesi başarısız. Kullanıcı bulunamadı.");
-        }
-        UserRepository.updateUser(user);
+    public void deleteUser() {
+        userRepository.deleteUser(getCurrentUser().getEmail());
     }
-
-
-    private void deleteUser(String email) {
-        UserRepository.deleteUser(email);
-    }
-
-    private User getUser(String email) {
-        return UserRepository.getUser(email);
-    }
-
 }

@@ -1,34 +1,43 @@
 package cinema.ui;
 
+import cinema.model.Ticket;
+import cinema.model.Session;
+import cinema.model.people.Customer;
+import cinema.service.AuthService;
+import cinema.service.TicketService;
+
 import javax.swing.*;
 import javax.swing.border.MatteBorder;
 import java.awt.*;
 import java.awt.event.*;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.UUID;
 
 public class PaymentFrame extends JFrame {
 
+    private final AuthService authService;
+    private final TicketService ticketService;
     private JPanel contentPane;
     private JTextField txtCardName, txtCardNumber, txtExpiry, txtCVV;
     private int mouseX, mouseY;
 
-    // Veriler
     private String movieTitle;
     private ArrayList<String> selectedSeats;
-    private String selectedSession;
+    private final String selectedSession;
     private final double TICKET_PRICE = 150.0;
 
-    // Renk Paleti
     private final Color COLOR_BG = new Color(33, 33, 33);
     private final Color COLOR_PANEL = new Color(45, 45, 45);
     private final Color COLOR_ACCENT = new Color(229, 9, 20);
     private final Color COLOR_TEXT_MUTED = new Color(150, 150, 150);
 
-    //  3 PARAMETRELİ CONSTRUCTOR (ASIL OLAN)
-    public PaymentFrame(String movieTitle, ArrayList<String> selectedSeats, String selectedSession) {
+    public PaymentFrame(String movieTitle, ArrayList<String> selectedSeats, String selectedSession, AuthService authService, TicketService ticketService) {
         this.movieTitle = movieTitle;
         this.selectedSeats = selectedSeats;
         this.selectedSession = selectedSession;
+        this.authService = authService;
+        this.ticketService = ticketService;
 
         setUndecorated(true);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
@@ -45,13 +54,19 @@ public class PaymentFrame extends JFrame {
         createPaymentForm();
     }
 
-    // ---------------- HEADER ----------------
     private void createHeader() {
         JPanel header = new JPanel();
         header.setBounds(0, 0, 800, 40);
         header.setBackground(COLOR_BG);
         header.setLayout(null);
         contentPane.add(header);
+
+        String name = (authService.getCurrentUser() != null) ? authService.getCurrentUser().getFirstName() : "Misafir";
+        JLabel lblUser = new JLabel("Müşteri: " + name);
+        lblUser.setForeground(COLOR_TEXT_MUTED);
+        lblUser.setFont(new Font("Segoe UI", Font.ITALIC, 12));
+        lblUser.setBounds(20, 0, 300, 40);
+        header.add(lblUser);
 
         JLabel close = new JLabel("X");
         close.setForeground(Color.WHITE);
@@ -73,7 +88,6 @@ public class PaymentFrame extends JFrame {
         });
     }
 
-    // ---------------- SUMMARY PANEL ----------------
     private void createSummaryPanel() {
         JPanel panel = new JPanel();
         panel.setBounds(30, 60, 300, 410);
@@ -94,7 +108,7 @@ public class PaymentFrame extends JFrame {
 
         double total = selectedSeats.size() * TICKET_PRICE;
 
-        JLabel totalLabel = new JLabel("TOPLAM");
+        JLabel totalLabel = new JLabel("TOPLAM ÖDENECEK");
         totalLabel.setForeground(COLOR_TEXT_MUTED);
         totalLabel.setBounds(20, 280, 200, 20);
         panel.add(totalLabel);
@@ -118,7 +132,6 @@ public class PaymentFrame extends JFrame {
         panel.add(v);
     }
 
-    // ---------------- PAYMENT FORM ----------------
     private void createPaymentForm() {
         JLabel lbl = new JLabel("Kart Bilgileri");
         lbl.setForeground(Color.WHITE);
@@ -126,30 +139,15 @@ public class PaymentFrame extends JFrame {
         lbl.setBounds(360, 60, 300, 30);
         contentPane.add(lbl);
 
-        JLabel lblName = new JLabel("Kart Sahibi Ad Soyad");
-        lblName.setForeground(COLOR_TEXT_MUTED);
-        lblName.setBounds(360, 95, 300, 20);
-        contentPane.add(lblName);
-
-        JLabel lblCard = new JLabel("Kart Numarası");
-        lblCard.setForeground(COLOR_TEXT_MUTED);
-        lblCard.setBounds(360, 165, 300, 20);
-        contentPane.add(lblCard);
-
-        JLabel lblExpiry = new JLabel("Son Kul. (AA/YY)");
-        lblExpiry.setForeground(COLOR_TEXT_MUTED);
-        lblExpiry.setBounds(360, 235, 200, 20);
-        contentPane.add(lblExpiry);
-
-        JLabel lblCVV = new JLabel("CVV");
-        lblCVV.setForeground(COLOR_TEXT_MUTED);
-        lblCVV.setBounds(570, 235, 100, 20);
-        contentPane.add(lblCVV);
-
-        txtCardName = createField("Kart Sahibi", 360, 120, 380);
+        txtCardName = createField("Kart Sahibi Ad Soyad", 360, 120, 380);
         txtCardNumber = createField("Kart Numarası", 360, 190, 380);
         txtExpiry = createField("AA/YY", 360, 260, 170);
         txtCVV = createField("CVV", 570, 260, 170);
+
+        addLabelToField("Kart Sahibi Ad Soyad", 360, 95);
+        addLabelToField("Kart Numarası", 360, 165);
+        addLabelToField("Son Kul. (AA/YY)", 360, 235);
+        addLabelToField("CVV", 570, 235);
 
         JButton pay = new JButton("ÖDEMEYİ TAMAMLA");
         pay.setBounds(360, 350, 380, 50);
@@ -157,14 +155,54 @@ public class PaymentFrame extends JFrame {
         pay.setForeground(Color.WHITE);
         pay.setFont(new Font("Segoe UI", Font.BOLD, 16));
         pay.setFocusPainted(false);
+        pay.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
-        pay.addActionListener(e -> {
-            JOptionPane.showMessageDialog(this,
-                    "Ödeme başarılı!\nİyi seyirler 🎬");
-            dispose();
-        });
+        pay.addActionListener(e -> handlePayment());
 
         contentPane.add(pay);
+    }
+
+    private void handlePayment() {
+        if (txtCardNumber.getText().trim().isEmpty() || txtCVV.getText().trim().isEmpty() || txtCardName.getText().trim().isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Lütfen kart bilgilerini eksiksiz girin.");
+            return;
+        }
+
+        try {
+            // 1. Mevcut kullanıcı ve seans nesnesini hazırla
+            Customer customer = (Customer) authService.getCurrentUser();
+            // Session nesnesini movieTitle ve selectedSession (zaman) parametrelerine göre buluyoruz
+
+
+            // 2. Her koltuk için bilet oluştur ve veritabanına kaydet
+            for (String seatCode : selectedSeats) {
+                // REPOSITORY İŞLEMİ
+                ticketService.buyTicket(selectedSession,customer,seatCode);
+            }
+
+            // 3. Başarı Mesajı
+            String message = String.format(
+                    "Sayın %s,\n%s filmi için %d adet biletiniz başarıyla oluşturuldu.\nKoltuklar: %s\nİyi seyirler! 🎬",
+                    customer.getFirstName(), movieTitle, selectedSeats.size(), String.join(", ", selectedSeats)
+            );
+
+            JOptionPane.showMessageDialog(this, message, "Ödeme Başarılı", JOptionPane.INFORMATION_MESSAGE);
+
+            // 4. Uygulamayı ana ekrana döndür
+            new CustomerMainFrame(authService, ticketService).setVisible(true);
+            dispose();
+
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Bilet kaydı sırasında bir hata oluştu: " + ex.getMessage(), "Sistem Hatası", JOptionPane.ERROR_MESSAGE);
+            ex.printStackTrace();
+        }
+    }
+
+    private void addLabelToField(String text, int x, int y) {
+        JLabel l = new JLabel(text);
+        l.setForeground(COLOR_TEXT_MUTED);
+        l.setBounds(x, y, 200, 20);
+        contentPane.add(l);
     }
 
     private JTextField createField(String placeholder, int x, int y, int w) {
@@ -174,6 +212,12 @@ public class PaymentFrame extends JFrame {
         f.setForeground(Color.WHITE);
         f.setCaretColor(COLOR_ACCENT);
         f.setBorder(new MatteBorder(0, 0, 2, 0, Color.GRAY));
+
+        f.addFocusListener(new FocusAdapter() {
+            public void focusGained(FocusEvent e) { f.setBorder(new MatteBorder(0, 0, 2, 0, COLOR_ACCENT)); }
+            public void focusLost(FocusEvent e) { f.setBorder(new MatteBorder(0, 0, 2, 0, Color.GRAY)); }
+        });
+
         contentPane.add(f);
         return f;
     }

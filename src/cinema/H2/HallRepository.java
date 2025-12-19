@@ -1,4 +1,4 @@
-package cinema.storage;
+package cinema.H2;
 
 import cinema.model.Hall;
 import java.sql.*;

@@ -14,12 +14,12 @@ public class Session {
     private final LocalDateTime startTime;
     private final LocalDateTime endTime;
 
-    private final boolean[][] seats;
+//    private boolean[][] seats;
 
     public Session(String sessionId, Hall hall, Media film, LocalDateTime startTime, LocalDateTime endTime) {
-        if (hall == null || film == null || startTime == null || endTime == null) {
-            throw new InvalidInputException("Seans oluşturulurken boş değer girilemez.");
-        }
+//        if (hall == null || film == null || startTime == null || endTime == null) {
+//            throw new InvalidInputException("Seans oluşturulurken boş değer girilemez.");
+//        }
 
         if (endTime.isBefore(startTime)) {
             throw new InvalidInputException("Seans bitiş saati başlangıç saatinden önce olamaz.");
@@ -32,31 +32,31 @@ public class Session {
         this.endTime = endTime;
 
         // Salon kapasitesine göre matrisi başlat (Default hepsi false yani boş)
-        this.seats = new boolean[hall.getRowCount()][hall.getColumnCount()];
+//        this.seats = new boolean[hall.getRowCount()][hall.getColumnCount()];
     }
 
     // --- KOLTUK YÖNETİM METODLARI ---
 
-    public void reserveSeat(String seatCode) {
-        int[] coords = decodeSeatCode(seatCode);
-        int r = coords[0];
-        int c = coords[1];
+//    public void reserveSeat(String seatCode) {
+//        int[] coords = decodeSeatCode(seatCode);
+//        int r = coords[0];
+//        int c = coords[1];
+//
+//        if (seats[r][c]) {
+//            throw new SeatOccupiedException(seatCode + " koltuğu zaten dolu!");
+//        }
+//        seats[r][c] = true;
+//    }
 
-        if (seats[r][c]) {
-            throw new SeatOccupiedException(seatCode + " koltuğu zaten dolu!");
-        }
-        seats[r][c] = true;
-    }
+//    public void freeSeat(String seatCode) {
+//        int[] coords = decodeSeatCode(seatCode);
+//        seats[coords[0]][coords[1]] = false;
+//    }
 
-    public void freeSeat(String seatCode) {
-        int[] coords = decodeSeatCode(seatCode);
-        seats[coords[0]][coords[1]] = false;
-    }
-
-    public boolean isSeatTaken(String seatCode) {
-        int[] coords = decodeSeatCode(seatCode);
-        return seats[coords[0]][coords[1]];
-    }
+//    public boolean isSeatTaken(String seatCode) {
+//        int[] coords = decodeSeatCode(seatCode);
+//        return seats[coords[0]][coords[1]];
+//    }
 
     // "A1" gibi kodları matris indislerine (0,0) çevirir
     private int[] decodeSeatCode(String seatCode) {
@@ -74,15 +74,15 @@ public class Session {
         }
     }
 
-    public int getAvailableSeatsCount() {
-        int count = 0;
-        for (boolean[] row : seats) {
-            for (boolean isTaken : row) {
-                if (!isTaken) count++;
-            }
-        }
-        return count;
-    }
+//    public int getAvailableSeatsCount() {
+//        int count = 0;
+//        for (boolean[] row : seats) {
+//            for (boolean isTaken : row) {
+//                if (!isTaken) count++;
+//            }
+//        }
+//        return count;
+//    }
 
     // --- GETTERLAR ---
 
@@ -105,8 +105,8 @@ public class Session {
     public LocalDateTime getEndTime() {
         return endTime;
     }
-
-    public boolean[][] getSeats() {
-        return seats;
-    }
+//
+//    public boolean[][] getSeats() {
+//        return seats;
+//    }
 }

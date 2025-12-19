@@ -1,22 +1,24 @@
-package cinema.storage;
+package cinema.H2;
 
 import cinema.model.people.Cashier;
 import cinema.model.people.Customer;
 import cinema.model.people.Manager;
 import cinema.model.people.User;
+import cinema.repository.UserRepository;
 
 import java.sql.*;
 import java.time.LocalDate;
 import java.util.UUID;
 
-public class UserRepository {
-    static final String URL = "jdbc:h2:./data/CINEMA_DB;AUTO_SERVER=TRUE;DB_CLOSE_DELAY=-1";
+public class H2UserRepository implements UserRepository {
+    private static final String URL = "jdbc:h2:./data/CINEMA_DB;AUTO_SERVER=TRUE;DB_CLOSE_DELAY=-1";
 
     private static final String CUSTOMER = "CUSTOMER";
     private static final String MANAGER = "MANAGER";
     private static final String CASHIER = "CASHIER";
 
-    public static void initialize() {
+    @Override
+    public void initialize() {
         try {
             Class.forName("org.h2.Driver");
         } catch (ClassNotFoundException e) {
@@ -74,7 +76,8 @@ public class UserRepository {
         }
     }
 
-    public static void saveUser(User user) {
+    @Override
+    public void saveUser(User user) {
         String userSql = "INSERT INTO users (id, first_name, last_name, email, date_of_birth, password, user_type) VALUES (?, ?, ?, ?, ?, ?, ?)";
         String newUserId = UUID.randomUUID().toString();
         try (Connection conn = DriverManager.getConnection(URL)) {
@@ -141,8 +144,8 @@ public class UserRepository {
         }
     }
 
-
-    public static void updateUser(User user) {
+    @Override
+    public void updateUser(User user) {
 
         String userSql = "UPDATE users SET first_name = ?, last_name = ?, email = ?, date_of_birth = ?, password = ? WHERE id = ?";
 
@@ -193,7 +196,8 @@ public class UserRepository {
         }
     }
 
-    public static void deleteUser(String email) {
+    @Override
+    public void deleteUser(String email) {
         String sql = "DELETE FROM users WHERE email = ?";
 
         try (Connection conn = DriverManager.getConnection(URL);
@@ -212,7 +216,8 @@ public class UserRepository {
         }
     }
 
-    public static User getUser(String email) {
+    @Override
+    public User getUser(String email) {
         // Önce kullanıcının tipini ve genel bilgilerini çekiyoruz
         String sql = "SELECT * FROM users WHERE email = ?";
 
@@ -250,7 +255,7 @@ public class UserRepository {
     }
 
     // Yardımcı metod: Customer verilerini JOIN ile çeker
-    private static Customer getCustomerDetails(Connection conn, String id, String fn, String ln, String email, LocalDate dob, String pass) throws SQLException {
+    private Customer getCustomerDetails(Connection conn, String id, String fn, String ln, String email, LocalDate dob, String pass) throws SQLException {
         String sql = "SELECT loyalty_points FROM customers WHERE user_id = ?";
         try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, id);
@@ -267,7 +272,7 @@ public class UserRepository {
         return null;
     }
 
-    private static Manager getManagerDetails(Connection conn, String id, String fn, String ln, String email, LocalDate dob, String pass) throws SQLException {
+    private Manager getManagerDetails(Connection conn, String id, String fn, String ln, String email, LocalDate dob, String pass) throws SQLException {
         String sql = "SELECT staff_id, hourly_rate, is_full_time, hire_date FROM managers WHERE user_id = ?";
 
         try (PreparedStatement pstmt = conn.prepareStatement(sql)) {

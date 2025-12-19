@@ -169,7 +169,7 @@
     <schema id="162" parent="2" name="INFORMATION_SCHEMA"/>
     <schema id="163" parent="2" name="PUBLIC">
       <Current>1</Current>
-      <LastIntrospectionLocalTimestamp>2025-12-19.12:46:45</LastIntrospectionLocalTimestamp>
+      <LastIntrospectionLocalTimestamp>2025-12-19.17:23:42</LastIntrospectionLocalTimestamp>
     </schema>
     <table id="164" parent="163" name="ADVERTISEMENTS"/>
     <table id="165" parent="163" name="CASHIERS"/>
@@ -500,7 +500,7 @@
     <column id="239" parent="172" name="TICKET_ID">
       <NotNull>1</NotNull>
       <Position>1</Position>
-      <StoredType>CHARACTER VARYING(20)|0s</StoredType>
+      <StoredType>CHARACTER VARYING(255)|0s</StoredType>
     </column>
     <column id="240" parent="172" name="SESSION_ID">
       <Position>2</Position>
@@ -543,16 +543,16 @@
       <RefKeyName>CONSTRAINT_4D</RefKeyName>
       <RefTableName>USERS</RefTableName>
     </foreign-key>
-    <index id="248" parent="172" name="PRIMARY_KEY_D">
+    <index id="248" parent="172" name="PRIMARY_KEY_39">
       <ColNames>TICKET_ID</ColNames>
       <NameSurrogate>1</NameSurrogate>
       <Unique>1</Unique>
     </index>
-    <index id="249" parent="172" name="CONSTRAINT_INDEX_D">
+    <index id="249" parent="172" name="CONSTRAINT_DB_INDEX_3">
       <ColNames>SESSION_ID</ColNames>
       <NameSurrogate>1</NameSurrogate>
     </index>
-    <index id="250" parent="172" name="CONSTRAINT_INDEX_DB">
+    <index id="250" parent="172" name="CONSTRAINT_DBF_INDEX_3">
       <ColNames>CUSTOMER_EMAIL</ColNames>
       <NameSurrogate>1</NameSurrogate>
     </index>

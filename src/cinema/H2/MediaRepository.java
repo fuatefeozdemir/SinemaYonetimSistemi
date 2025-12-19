@@ -1,10 +1,12 @@
-package cinema.storage;
+package cinema.H2;
 
 
 import cinema.model.content.*;
 
 import java.sql.*;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 public class MediaRepository {
@@ -301,6 +303,68 @@ public class MediaRepository {
             e.printStackTrace();
         }
         return null;
+    }
+    public static List<Media> getAllFilm() throws SQLException {
+        List<Media> mediaList = new ArrayList<>();
+
+        // Şemandaki sütun isimlerine göre güncellenmiş SQL (m.duration_minutes ve m.is_visible)
+        String sql = "SELECT m.id, m.name, m.duration_minutes, m.is_visible, m.media_type, " +
+                "f.release_date, f.director, f.age_restriction, f.genre, " +
+                "f.language, f.imdb_rating, f.type " +
+                "FROM media m " +
+                "LEFT JOIN films f ON m.id = f.media_id";
+
+        try (Connection conn = DriverManager.getConnection(URL);
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+
+            while (rs.next()) {
+                // 1. Temel Media Bilgileri (Media Tablosundan)
+                String id = rs.getString("id");
+                String name = rs.getString("name");
+                int duration = rs.getInt("duration_minutes"); // Tabloda duration_minutes olduğu için düzelttik
+                boolean isVisible = rs.getBoolean("is_visible"); // Tabloda is_visible olduğu için düzelttik
+                String mediaType = rs.getString("media_type");
+
+                Media media = null;
+
+                // 2. Tür Kontrolü
+                if (FILM.equalsIgnoreCase(mediaType)) {
+                    // Film detayları (Films Tablosundan)
+                    String filmSubType = rs.getString("type");
+
+                    // Tarih kontrolü
+                    java.sql.Date sqlDate = rs.getDate("release_date");
+                    LocalDate releaseDate = (sqlDate != null) ? sqlDate.toLocalDate() : LocalDate.now();
+
+                    String director = rs.getString("director");
+                    String ageRestriction = rs.getString("age_restriction");
+                    String genre = rs.getString("genre");
+                    String language = rs.getString("language");
+                    float imdbRating = rs.getFloat("imdb_rating");
+
+                    // Alt tipe göre doğru nesneyi üret (Standard, Premium, Animation)
+                    if (PREMIUM.equalsIgnoreCase(filmSubType)) {
+                        media = new Premium3D(name, duration, isVisible, releaseDate, director, ageRestriction, genre, language, imdbRating);
+                    } else if (ANIMATION.equalsIgnoreCase(filmSubType)) {
+                        media = new Animation(name, duration, isVisible, releaseDate, director, ageRestriction, genre, language, imdbRating);
+                    } else {
+                        media = new Standard2D(name, duration, isVisible, releaseDate, director, ageRestriction, genre, language, imdbRating);
+                    }
+                }
+                else if (TRAILER.equalsIgnoreCase(mediaType)) {
+                    // Trailer için ayrı tabloya gitmek gerekirse trailers tablosundan veri çekilebilir
+                    // Şimdilik temel trailer nesnesi oluşturuyoruz
+                    media = new Trailer(name, duration, isVisible, "Fragman");
+                }
+
+                if (media != null) {
+                    // media.setId(id); // Eğer Media class'ında setId varsa bunu açın
+                    mediaList.add(media);
+                }
+            }
+        }
+        return mediaList;
     }
 
 }
