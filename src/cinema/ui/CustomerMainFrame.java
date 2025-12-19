@@ -6,6 +6,8 @@ import javax.swing.border.LineBorder;
 import javax.swing.plaf.basic.BasicScrollBarUI;
 import java.awt.*;
 import java.awt.event.*;
+import java.net.URL;
+
 
 public class CustomerMainFrame extends JFrame {
 
@@ -144,15 +146,64 @@ public class CustomerMainFrame extends JFrame {
         card.setBackground(COLOR_CARD_BG);
         card.setBorder(new LineBorder(COLOR_BORDER, 1));
 
-        JPanel posterPanel = new JPanel();
-        posterPanel.setBackground(new Color(60, 60, 60));
-        posterPanel.setBounds(0, 0, 230, 190);
-        posterPanel.setLayout(new GridBagLayout());
+    // --- HOVER EFEKTİ ---
 
-        JLabel lblIcon = new JLabel(title.substring(0, 1));
-        lblIcon.setFont(new Font("Segoe UI", Font.BOLD, 60));
-        lblIcon.setForeground(new Color(90, 90, 90));
-        posterPanel.add(lblIcon);
+    card.addMouseListener(new MouseAdapter() {
+        @Override
+        public void mouseEntered(MouseEvent e) {
+            card.setBorder(new LineBorder(COLOR_ACCENT,2));
+            card.setBackground(new Color(55, 55, 55));
+            card.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        }
+
+        @Override
+        public void mouseExited(MouseEvent e) {
+            card.setBorder(new LineBorder(COLOR_BORDER,1));
+            card.setBackground(COLOR_CARD_BG);
+            card.setCursor(Cursor.getDefaultCursor());
+        }
+    });
+
+        JPanel posterPanel = new JPanel();
+        posterPanel.setBounds(0, 0, 230, 190);
+        posterPanel.setLayout(new BorderLayout());
+
+        String imageName = switch (title) {
+            case "Inception" -> "inception";
+            case "The Dark Knight" -> "dark_knight";
+            case "Interstellar" -> "interstellar";
+            case "Titanic" -> "titanic";
+            case "Avatar 2" -> "avatar2";
+            case "Joker" -> "joker";
+            case "Avengers" -> "avengers";
+            case "Matrix" -> "matrix";
+            default -> null;
+        };
+
+        URL imgUrl = null;
+
+        if (imageName != null) {
+            imgUrl = getClass().getResource("/posters/" + imageName + ".jpg");
+        }
+
+        if (imgUrl != null) {
+            ImageIcon rawIcon = new ImageIcon(imgUrl);
+
+            Image scaled = rawIcon.getImage()
+                    .getScaledInstance(230, 190, Image.SCALE_SMOOTH);
+
+            JLabel posterLabel = new JLabel(new ImageIcon(scaled));
+            posterLabel.setHorizontalAlignment(SwingConstants.CENTER);
+
+            posterPanel.add(posterLabel, BorderLayout.CENTER);
+        } else {
+            JLabel noPoster = new JLabel("Poster yok");
+            noPoster.setHorizontalAlignment(SwingConstants.CENTER);
+            noPoster.setForeground(Color.GRAY);
+
+            posterPanel.add(noPoster, BorderLayout.CENTER);
+        }
+
         card.add(posterPanel);
 
         JLabel lblTitle = new JLabel(title);
@@ -182,7 +233,7 @@ public class CustomerMainFrame extends JFrame {
                 SeatSelectionFrame seatFrame = new SeatSelectionFrame(title);
                 seatFrame.setVisible(true);
             } catch (Exception ex) {
-                JOptionPane.showMessageDialog(this, "Koltuk Seçim Ekranı (SeatSelectionFrame) bulunamadı!");
+                JOptionPane.showMessageDialog(this,"Koltuk Seçim Ekranı açılamadı: " + ex.getMessage());
             }
         });
         card.add(btnBuy);
