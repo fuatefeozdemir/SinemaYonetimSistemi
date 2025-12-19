@@ -10,8 +10,8 @@ import java.time.LocalDate;
 import java.util.UUID;
 
 public class UserRepository {
-
     static final String URL = "jdbc:h2:./data/CINEMA_DB;AUTO_SERVER=TRUE;DB_CLOSE_DELAY=-1";
+
     private static final String CUSTOMER = "CUSTOMER";
     private static final String MANAGER = "MANAGER";
     private static final String CASHIER = "CASHIER";

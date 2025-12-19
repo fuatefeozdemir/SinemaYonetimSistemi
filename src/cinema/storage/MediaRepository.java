@@ -9,14 +9,16 @@ import java.util.UUID;
 
 public class MediaRepository {
     static final String URL = "jdbc:h2:./data/CINEMA_DB;AUTO_SERVER=TRUE;DB_CLOSE_DELAY=-1";
+
     private static final String FILM = "FILM";
     private static final String TRAILER = "TRAILER";
     private static final String ADVERTISEMENT = "ADVERTISEMENT";
+
     private static final String STANDARD = "Standard";
     private static final String PREMIUM = "Premium";
     private static final String ANIMATION = "Animation";
 
-    public static void initDatabase() {
+    public static void initialize() {
         try (Connection conn = DriverManager.getConnection(URL);
              Statement stmt = conn.createStatement()) {
 
@@ -37,7 +39,7 @@ public class MediaRepository {
                     "genre VARCHAR(100), " +
                     "language VARCHAR(50), " +
                     "imdb_rating FLOAT, " +
-                    "type VARCHAR(20), " + // Yeni eklenen alan: 2D, 3D vb.
+                    "type VARCHAR(20), " +
                     "FOREIGN KEY (media_id) REFERENCES media(id) ON DELETE CASCADE)";
             stmt.execute(filmTableSql);
 

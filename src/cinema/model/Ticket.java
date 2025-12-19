@@ -4,87 +4,73 @@ import cinema.exception.InvalidInputException;
 import cinema.model.people.Customer;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 public class Ticket {
 
-    // Bilet sayaçı
     private static int ticketCount = 0;
 
     private final String ticketId;
     private final LocalDateTime purchaseTime;
     private final double finalPrice;
-    private boolean isRefunded; // Bilet iade edildi mi
+    private boolean isRefunded;
 
-    // Bilete ait diğer nesneler
     private final Session session;
     private final Customer customer;
-    private final Seat seat;
+    private final String seatCode; // Seat nesnesi yerine String kod tutuyoruz
 
-    public Ticket(Session session, Customer customer, Seat seat, double finalPrice) {
-
+    public Ticket(Session session, Customer customer, String seatCode, double finalPrice) {
         Ticket.ticketCount++;
         this.ticketId = String.format("T%05d", Ticket.ticketCount);
 
-        if (session == null || customer == null || seat == null) {
-            throw new InvalidInputException("Bilet oluşturulurken Seans, Müşteri veya Koltuk boş olamaz.");
+        if (session == null || customer == null || seatCode == null || seatCode.isEmpty()) {
+            throw new InvalidInputException("Bilet oluşturulurken Seans, Müşteri veya Koltuk kodu boş olamaz.");
         }
         if (finalPrice <= 0) {
             throw new InvalidInputException("Final fiyatı sıfır veya negatif olamaz.");
         }
 
-        // 3. Atamalar
         this.session = session;
         this.customer = customer;
-        this.seat = seat;
+        this.seatCode = seatCode.toUpperCase().trim();
         this.finalPrice = finalPrice;
         this.purchaseTime = LocalDateTime.now();
-        this.isRefunded = false; // Biletler oluşturulduğunda her zaman iade edilmemiş olacaktır
+        this.isRefunded = false;
 
-        // Bilet kesildiğinde koltuğu rezerve et
-        seat.reserve();
+        // Bilet kesildiğinde ilgili seansın matrisinde koltuğu rezerve et
+        this.session.reserveSeat(this.seatCode);
     }
 
     public boolean refund() {
         if (this.isRefunded) {
-            return false; // Bilet zaten iade edilmiş
+            return false; // Zaten iade edilmiş
         }
 
-        this.seat.free();
+        // Seans üzerindeki koltuğu serbest bırak
+        this.session.freeSeat(this.seatCode);
 
         this.isRefunded = true;
         return true;
     }
 
-    // --- GETTER METOTLARI ---
+    // --- GETTERLAR ---
 
-    public String getTicketId() {
-        return ticketId;
-    }
-    public LocalDateTime getPurchaseTime() {
-        return purchaseTime;
-    }
-    public double getFinalPrice() {
-        return finalPrice;
-    }
-    public boolean isRefunded() {
-        return isRefunded;
-    }
-    public Session getSession() {
-        return session;
-    }
-    public Customer getCustomer() {
-        return customer;
-    }
-    public Seat getSeat() {
-        return seat;
-    }
+    public String getTicketId() { return ticketId; }
+    public LocalDateTime getPurchaseTime() { return purchaseTime; }
+    public double getFinalPrice() { return finalPrice; }
+    public boolean isRefunded() { return isRefunded; }
+    public Session getSession() { return session; }
+    public Customer getCustomer() { return customer; }
+    public String getSeatCode() { return seatCode; }
 
     @Override
     public String toString() {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
         return "Bilet ID: " + ticketId +
                 ", Film: " + session.getFilm().getName() +
-                ", Koltuk: " + seat.getSeatCode() +
+                ", Koltuk: " + seatCode +
+                ", Müşteri: " + customer.getFirstName() + " " + customer.getLastName() +
                 ", Fiyat: " + finalPrice + " TL" +
-                ", Saat: " + purchaseTime.format(java.time.format.DateTimeFormatter.ofPattern("HH:mm"));
+                ", İşlem Tarihi: " + purchaseTime.format(formatter);
     }
 }
