@@ -159,8 +159,16 @@ public class PaymentFrame extends JFrame {
         pay.setFocusPainted(false);
 
         pay.addActionListener(e -> {
-            JOptionPane.showMessageDialog(this,
-                    "Ödeme başarılı!\nİyi seyirler 🎬");
+            double totalPrice = selectedSeats.size() * TICKET_PRICE;
+
+            ReceiptFrame receipt = new ReceiptFrame(
+                    movieTitle,
+                    selectedSession,
+                    new ArrayList<>(selectedSeats),
+                    totalPrice
+            );
+
+            receipt.setVisible(true);
             dispose();
         });
 

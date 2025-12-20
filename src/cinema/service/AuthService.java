@@ -1,48 +1,32 @@
 package cinema.service;
 
-import cinema.exception.AuthenticationException;
+import cinema.model.people.User;  // BUNA DİKKAT
 import cinema.exception.InvalidInputException;
-import cinema.model.people.User;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class AuthService {
 
-    private final List<User> users;
-    private User currentUser;
-
-    public AuthService() {
-        this.users = new ArrayList<>();
-    }
+    private final List<User> users = new ArrayList<>();
 
     public void register(User user) {
-        if (user == null) {
-            throw new InvalidInputException("Kayıt edilecek kullanıcı nesnesi boş olamaz.");
-        }
-        this.users.add(user);
+        if (user == null) throw new IllegalArgumentException("Kullanıcı null olamaz.");
+
+        String email = user.getEmail();
+        boolean exists = users.stream()
+                .anyMatch(u -> u.getEmail().equalsIgnoreCase(email));
+
+        if (exists) throw new IllegalArgumentException("Bu e-posta zaten kayıtlı.");
+
+        users.add(user);
     }
 
     public User login(String email, String password) {
-        if (email == null || email.isBlank() || password == null || password.isBlank()) {
-            throw new InvalidInputException("E-posta ve şifre alanı boş bırakılamaz.");
-        }
-
-        for (User user : users) {
-            if (user.getEmail().equalsIgnoreCase(email) && user.getPassword().equals(password)) {
-                this.currentUser = user;
-                return user;
-            }
-        }
-
-        throw new AuthenticationException("Giriş başarısız! E-posta veya şifre hatalı.");
-    }
-
-    public void logout() {
-        this.currentUser = null;
-    }
-
-    public User getCurrentUser() {
-        return currentUser;
+        return users.stream()
+                .filter(u -> u.getEmail().equalsIgnoreCase(email))
+                .filter(u -> u.getPassword().equals(password))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Hatalı e-posta veya şifre."));
     }
 }

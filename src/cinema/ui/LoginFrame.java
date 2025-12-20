@@ -28,9 +28,8 @@ public class LoginFrame extends JFrame {
     public static void main(String[] args) {
         EventQueue.invokeLater(() -> {
             try {
-                // TEST İÇİN: Null yerine geçici bir anonim sınıf veya mock gönderebiliriz.
-                // Şimdilik null bırakıyorum ama gerçek entegrasyonda burası ApplicationContext'ten gelecek.
-                LoginFrame frame = new LoginFrame(null);
+                AuthService authService = new AuthService(); // null değil
+                LoginFrame frame = new LoginFrame(authService);
                 frame.setVisible(true);
             } catch (Exception e) {
                 e.printStackTrace();
@@ -114,7 +113,7 @@ public class LoginFrame extends JFrame {
 
     private void initForm() {
         // Kullanıcı Adı
-        JLabel lblUser = new JLabel("Kullanıcı Adı");
+        JLabel lblUser = new JLabel("E-posta / Kullanıcı Adı");
         lblUser.setForeground(COLOR_TEXT);
         lblUser.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         lblUser.setBounds(75, 170, 300, 20);
@@ -164,11 +163,10 @@ public class LoginFrame extends JFrame {
         lblRegister.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                // TODO: RegisterFrame entegrasyonu
-                JOptionPane.showMessageDialog(null, "Kayıt ekranı yapım aşamasında.");
-                // new RegisterFrame(authService).setVisible(true);
-                // dispose();
+                new RegisterFrame(authService).setVisible(true);  // kayıt ekranını aç
+                dispose();                                        // login'i kapat
             }
+
             @Override
             public void mouseEntered(MouseEvent e) { lblRegister.setForeground(COLOR_ACCENT); }
             @Override
@@ -200,50 +198,62 @@ public class LoginFrame extends JFrame {
             public void focusLost(FocusEvent e) { field.setBorder(new MatteBorder(0, 0, 2, 0, COLOR_INPUT_BORDER)); }
         });
     }
-
-    // --- GİRİŞ MANTIĞI ---
     private void handleLogin(ActionEvent e) {
-        String username = txtUsername.getText();
-        String password = new String(txtPassword.getPassword());
+        String identifier = txtUsername.getText().trim();   // senin field: txtUsername
+        String pass = new String(txtPassword.getPassword()).trim(); // senin field: txtPassword
 
-        if (username.isEmpty() || password.isEmpty()) {
+        if (identifier.isEmpty() || pass.isEmpty()) {
             JOptionPane.showMessageDialog(this, "Lütfen tüm alanları doldurun.", "Uyarı", JOptionPane.WARNING_MESSAGE);
             return;
         }
 
-        // --- HIBERNATE ENTEGRASYONUNDA BURASI DEĞİŞECEK ---
-        // Gerçek senaryoda: User user = authService.login(username, password);
-        // if (user != null) { role kontrolü yap }
+        // 1) ADMIN sabit giriş
+        if (identifier.equalsIgnoreCase("admin") && pass.equals("1234")) {
+            new ManagerFrame(authService).setVisible(true);
+            dispose();
+            return;
+        }
 
-        // Şimdilik simülasyon:
-        if ("admin".equals(username) && "123".equals(password)) {
-            openDashboard("Admin Dashboard");
-            // new AdminDashboard().setVisible(true);
+        // 2) KASİYER sabit giriş
+        if (identifier.equalsIgnoreCase("kasiyer") && pass.equals("1234")) {
+            new CashierFrame(authService).setVisible(true);
+            dispose();
+            return;
         }
-        else if ("kasiyer".equals(username) && "123".equals(password)) {
-            openDashboard("Kasiyer Ekranı");
-            // new CashierFrame().setVisible(true);
-        }
-        else if ("musteri".equals(username) && "123".equals(password)) {
-            // Müşteri Paneli Açılışı
-            SwingUtilities.invokeLater(() -> {
-                try {
-                    new CustomerMainFrame().setVisible(true);
-                    this.dispose();
-                } catch (Exception ex) {
-                    JOptionPane.showMessageDialog(this, "Arayüz yüklenemedi: " + ex.getMessage());
-                    ex.printStackTrace();
-                }
-            });
-        }
-        else {
-            JOptionPane.showMessageDialog(this, "Hatalı Kullanıcı Adı veya Şifre", "Hata", JOptionPane.ERROR_MESSAGE);
+
+        // 3) CUSTOMER -> AuthService login (email ile)
+        try {
+            cinema.model.people.User user = authService.login(identifier, pass);
+
+            // customer ekranı
+            new CustomerMainFrame().setVisible(true);
+            dispose();
+
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, ex.getMessage(), "Hata", JOptionPane.ERROR_MESSAGE);
         }
     }
+    private void openDashboard(String role) {
 
-    // Geçici yardımcı metod
-    private void openDashboard(String title) {
-        JOptionPane.showMessageDialog(this, title + " Yükleniyor...");
-        this.dispose();
+        if ("admin".equalsIgnoreCase(role)) {
+            new ManagerFrame(authService).setVisible(true);
+            dispose();
+            return;
+        }
+
+        if ("cashier".equalsIgnoreCase(role)) {
+            new CashierFrame(authService).setVisible(true);
+            dispose();
+            return;
+        }
+
+        if ("customer".equalsIgnoreCase(role)) {
+            new CustomerMainFrame().setVisible(true);
+            dispose();
+            return;
+        }
+
+        JOptionPane.showMessageDialog(this, "Geçersiz rol: " + role, "Hata", JOptionPane.ERROR_MESSAGE);
     }
+
 }

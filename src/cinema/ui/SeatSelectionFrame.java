@@ -56,6 +56,25 @@ public class SeatSelectionFrame extends JFrame {
         initFooter();
     }
 
+    public SeatSelectionFrame(String movieTitle, String selectedSession) {
+        this.movieTitle = movieTitle;
+        this.selectedSession = selectedSession;
+
+        setUndecorated(true);
+        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        setBounds(100, 100, 950, 700);
+        setLocationRelativeTo(null);
+
+        contentPane = new JPanel();
+        contentPane.setBackground(COLOR_BG);
+        setContentPane(contentPane);
+        contentPane.setLayout(new BorderLayout(0, 0));
+
+        initHeader();
+        initStage();
+        initFooter();
+    }
+
     // --- 1. HEADER ---
     private void initHeader() {
         JPanel headerPanel = new JPanel();
@@ -65,11 +84,17 @@ public class SeatSelectionFrame extends JFrame {
         headerPanel.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, COLOR_HEADER_BORDER));
         contentPane.add(headerPanel, BorderLayout.NORTH);
 
-        JLabel title = new JLabel("Koltuk Seçimi: " + movieTitle);
+        JLabel title = new JLabel("Koltuk Seçimi: " + movieTitle + "  |  " + selectedSession);
         title.setForeground(Color.WHITE);
         title.setFont(new Font("Segoe UI", Font.BOLD, 18));
-        title.setBounds(20, 0, 400, 50);
+        title.setBounds(20, 2, 600, 30);
         headerPanel.add(title);
+
+        JLabel sessionLbl = new JLabel(selectedSession);
+        sessionLbl.setForeground(Color.LIGHT_GRAY);
+        sessionLbl.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        sessionLbl.setBounds(20, 28, 400, 20);
+        headerPanel.add(sessionLbl);
 
         JLabel close = new JLabel("X");
         close.setForeground(Color.WHITE);
@@ -220,7 +245,7 @@ public class SeatSelectionFrame extends JFrame {
 
     // --- ÖZEL METOT: MODERN KOLTUK YARATICI ---
     private JToggleButton createModernSeat(String seatNo) {
-        boolean isSold = Math.random() < 0.2;
+        boolean isSold = false; // DB entegrasyonunda burası değişecek
 
         JToggleButton btn = new JToggleButton(seatNo) {
             @Override
