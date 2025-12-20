@@ -8,8 +8,10 @@ import cinema.model.people.Cashier;
 import cinema.model.people.Customer;
 import cinema.model.people.Manager;
 import cinema.model.people.User;
+import cinema.service.AuthService;
 import cinema.service.TicketService;
 import cinema.storage.*;
+import cinema.ui.LoginFrame;
 
 import javax.swing.SwingUtilities;
 import java.sql.SQLException;
@@ -36,51 +38,51 @@ public class Main {
                     sessionRepo.initialize();
                     ticketRepo.initialize();
 
-                    // --- 2. KULLANICI GİRİŞLERİ ---
-                    Customer customerAli = new Customer("Ali", "Kaya", "ali@mail.com", LocalDate.of(2005, 5, 15), "ali123");
-                    customerAli.setId(UUID.randomUUID().toString());
-                    userRepo.saveUser(customerAli); // 18 yaş altı (İndirimli bilet testi için)
-
-                    Cashier cashierMehmet = new Cashier("Mehmet", "Demir", "mehmet@sinema.com", LocalDate.of(1990, 1, 1), "m123", 501, 150.0, true, LocalDate.now());
-                    cashierMehmet.setId(UUID.randomUUID().toString());
-                    userRepo.saveUser(cashierMehmet);
-
-                    // --- 3. SALON VE MEDYA GİRİŞLERİ ---
-                    Hall hall1 = new Hall("Salon 1 (Dolby)", 10, 10); // 100 Kişilik
-                    hallRepo.saveHall(hall1);
-
-                    Film filmInterstellar = new Standard2D("Interstellar", 169, true, LocalDate.of(2014, 11, 7),
-                            "Christopher Nolan", "13+", "Sci-Fi", "English", 8.7f);
-                    mediaRepo.saveMedia(filmInterstellar);
-
-                    Trailer interstellarTrailer = new Trailer("Interstellar Teaser", 2, true, "Interstellar");
-                    mediaRepo.saveMedia(interstellarTrailer);
-
-                    // --- 4. SEANS OLUŞTURMA ---
-                    LocalDateTime start = LocalDateTime.of(LocalDate.now(), LocalTime.of(21, 0));
-                    LocalDateTime end = start.plusMinutes(filmInterstellar.getDurationMinutes());
-
-                    Session sessionNight = new Session("SESS-001", hall1, filmInterstellar, start, end);
-                    sessionRepo.saveSession(sessionNight);
-
-                    // --- 5. BİLET SATIŞ SİMÜLASYONU (TicketService üzerinden) ---
-                    TicketService ticketService = new TicketService();
-
-                    // Ali için "B5" koltuğuna bilet alıyoruz
-                    // (TicketService içinde: yaş kontrolü yapılır -> fiyat hesaplanır -> seans koltuğu rezerve edilir)
-                    Ticket aliBilet = ticketService.buyTicket(sessionNight, customerAli, "B5", cashierMehmet);
-
-                    // Veritabanı Kayıtları
-                    ticketRepo.saveTicket(aliBilet);       // Bileti kaydet
-                    sessionRepo.updateSeats(sessionNight); // Seansın dolan koltuğunu (B5) güncelle
-                    userRepo.updateUser(customerAli);      // Ali'nin kazandığı +5 puanı kaydet
-                    userRepo.updateUser(cashierMehmet);    // Kasiyerin satış sayısını güncelle
-
-                    System.out.println("=== TEST VERİLERİ BAŞARIYLA YÜKLENDİ ===");
-                    System.out.println("Film: " + filmInterstellar.getName());
-                    System.out.println("Müşteri: " + customerAli.getFirstName() + " (Puan: " + customerAli.getLoyaltyPoints() + ")");
-                    System.out.println("Bilet No: " + aliBilet.getTicketId() + " | Koltuk: " + aliBilet.getSeatCode());
-                    System.out.println("Kasiyer: " + cashierMehmet.getFirstName() + " Satış Sayısı: " + cashierMehmet.getDailyCount());
+//                    // --- 2. KULLANICI GİRİŞLERİ ---
+//                    Customer customerAli = new Customer("Ali", "Kaya", "ali@mail.com", LocalDate.of(2005, 5, 15), "ali123");
+//                    customerAli.setId(UUID.randomUUID().toString());
+//                    userRepo.saveUser(customerAli); // 18 yaş altı (İndirimli bilet testi için)
+//
+//                    Cashier cashierMehmet = new Cashier("Mehmet", "Demir", "mehmet@sinema.com", LocalDate.of(1990, 1, 1), "m123", 501, 150.0, true, LocalDate.now());
+//                    cashierMehmet.setId(UUID.randomUUID().toString());
+//                    userRepo.saveUser(cashierMehmet);
+//
+//                    // --- 3. SALON VE MEDYA GİRİŞLERİ ---
+//                    Hall hall1 = new Hall("Salon 1 (Dolby)", 10, 10); // 100 Kişilik
+//                    hallRepo.saveHall(hall1);
+//
+//                    Film filmInterstellar = new Standard2D("Interstellar", 169, true, LocalDate.of(2014, 11, 7),
+//                            "Christopher Nolan", "13+", "Sci-Fi", "English", 8.7f);
+//                    mediaRepo.saveMedia(filmInterstellar);
+//
+//                    Trailer interstellarTrailer = new Trailer("Interstellar Teaser", 2, true, "Interstellar");
+//                    mediaRepo.saveMedia(interstellarTrailer);
+//
+//                    // --- 4. SEANS OLUŞTURMA ---
+//                    LocalDateTime start = LocalDateTime.of(LocalDate.now(), LocalTime.of(21, 0));
+//                    LocalDateTime end = start.plusMinutes(filmInterstellar.getDurationMinutes());
+//
+//                    Session sessionNight = new Session("SESS-001", hall1, filmInterstellar, start, end);
+//                    sessionRepo.saveSession(sessionNight);
+//
+//                    // --- 5. BİLET SATIŞ SİMÜLASYONU (TicketService üzerinden) ---
+//                    TicketService ticketService = new TicketService();
+//
+//                    // Ali için "B5" koltuğuna bilet alıyoruz
+//                    // (TicketService içinde: yaş kontrolü yapılır -> fiyat hesaplanır -> seans koltuğu rezerve edilir)
+//                    Ticket aliBilet = ticketService.buyTicket(sessionNight, customerAli, "B5", cashierMehmet);
+//
+//                    // Veritabanı Kayıtları
+//                    ticketRepo.saveTicket(aliBilet);       // Bileti kaydet
+//                    sessionRepo.updateSeats(sessionNight); // Seansın dolan koltuğunu (B5) güncelle
+//                    userRepo.updateUser(customerAli);      // Ali'nin kazandığı +5 puanı kaydet
+//                    userRepo.updateUser(cashierMehmet);    // Kasiyerin satış sayısını güncelle
+//
+//                    System.out.println("=== TEST VERİLERİ BAŞARIYLA YÜKLENDİ ===");
+//                    System.out.println("Film: " + filmInterstellar.getName());
+//                    System.out.println("Müşteri: " + customerAli.getFirstName() + " (Puan: " + customerAli.getLoyaltyPoints() + ")");
+//                    System.out.println("Bilet No: " + aliBilet.getTicketId() + " | Koltuk: " + aliBilet.getSeatCode());
+//                    System.out.println("Kasiyer: " + cashierMehmet.getFirstName() + " Satış Sayısı: " + cashierMehmet.getDailyCount());
 
 //                    HallRepository hallRepo = new HallRepository();
 //                    MediaRepository mediaRepo = new MediaRepository();
@@ -245,9 +247,9 @@ public class Main {
 //                System.out.println("Inception başarıyla 4DX olarak güncellendi.");
 //            }
 
-//            AuthService authService = new AuthService();
-//            LoginFrame loginFrame = new LoginFrame(authService);
-//            loginFrame.setVisible(true);
+            AuthService authService = new AuthService();
+            LoginFrame loginFrame = new LoginFrame(authService);
+            loginFrame.setVisible(true);
         });
     }
 }
