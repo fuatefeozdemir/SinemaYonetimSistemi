@@ -121,8 +121,8 @@ public class CashierFrame extends JFrame {
             String selectedSession = (String) cmbSession.getSelectedItem();
 
             // Koltuk ekranını aç
-            SeatSelectionFrame seatFrame = new SeatSelectionFrame(selectedMovie, selectedSession);
-            seatFrame.setVisible(true);
+            //SeatSelectionFrame seatFrame = new SeatSelectionFrame();
+            //seatFrame.setVisible(true);
 
             // İstersen kasiyer ekranını kapat (zorunlu değil)
             // dispose();
