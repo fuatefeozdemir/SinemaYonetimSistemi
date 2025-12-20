@@ -55,4 +55,6 @@ public class Manager extends Personnel {
         // Yöneticinin saatlik ücreti katsayı ile çarpılarak maaşı hesaplanır
         return (getHourlyRate() * MANAGER_RATE_MULTIPLIER) * effectiveHours;
     }
+
+
 }
