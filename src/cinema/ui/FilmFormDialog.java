@@ -2,31 +2,26 @@ package cinema.ui;
 
 import cinema.model.content.*;
 import cinema.service.MediaService;
-
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 import java.awt.*;
-import java.awt.event.*;
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
 
 public class FilmFormDialog extends JDialog {
 
     private final MediaService mediaService;
-    private final Film existingFilm; // Düzenleme modu için
+    private final Film existingFilm;
 
     private JTextField txtName, txtDuration, txtReleaseDate, txtDirector, txtAge, txtGenre, txtLanguage, txtImdb;
     private JComboBox<String> cmbType;
     private JCheckBox chkVisible;
 
-    // Premium Renk Paleti
+    // Renk değişkenleri
     private final Color COLOR_BG = new Color(10, 10, 10);
     private final Color COLOR_CARD = new Color(22, 22, 22);
     private final Color COLOR_ACCENT = new Color(229, 9, 20);
     private final Color COLOR_TEXT_MAIN = new Color(245, 245, 245);
-    private final Color COLOR_TEXT_SUB = new Color(150, 150, 150);
     private final Color COLOR_BORDER = new Color(35, 35, 35);
 
     public FilmFormDialog(JFrame owner, String title, Film existingFilm, MediaService mediaService) {
@@ -34,6 +29,7 @@ public class FilmFormDialog extends JDialog {
         this.existingFilm = existingFilm;
         this.mediaService = mediaService;
 
+        // Form ayarları
         setUndecorated(true);
         setSize(450, 650);
         setLocationRelativeTo(owner);
@@ -52,6 +48,7 @@ public class FilmFormDialog extends JDialog {
         }
     }
 
+    // Başlık ve kapatma butonunun olduğu bölüm
     private void initHeader(String title) {
         JPanel header = new JPanel(new BorderLayout());
         header.setBackground(COLOR_BG);
@@ -65,17 +62,17 @@ public class FilmFormDialog extends JDialog {
 
         JButton btnClose = new JButton("X");
         btnClose.setFont(new Font("Segoe UI Black", Font.BOLD, 16));
-        btnClose.setForeground(COLOR_TEXT_SUB);
+        btnClose.setForeground(new Color(150, 150, 150));
         btnClose.setContentAreaFilled(false);
         btnClose.setBorderPainted(false);
         btnClose.setCursor(new Cursor(Cursor.HAND_CURSOR));
         btnClose.addActionListener(e -> dispose());
         header.add(btnClose, BorderLayout.EAST);
 
-        rootPane.add(header, BorderLayout.NORTH);
         add(header, BorderLayout.NORTH);
     }
 
+    // Veri giriş alanlarının bulunduğu kısım
     private void initForm() {
         JPanel formPanel = new JPanel();
         formPanel.setLayout(new BoxLayout(formPanel, BoxLayout.Y_AXIS));
@@ -83,15 +80,16 @@ public class FilmFormDialog extends JDialog {
         formPanel.setBorder(new EmptyBorder(10, 30, 10, 30));
 
         cmbType = new JComboBox<>(new String[]{"Standard 2D", "Premium 3D", "Animasyon"});
-        styleCombo(cmbType, "FİLM TİPİ");
+        styleCombo(cmbType);
         formPanel.add(cmbType);
 
+        // Form alanları
         txtName = addStyledField(formPanel, "FİLM ADI");
         txtGenre = addStyledField(formPanel, "TÜR");
         txtDuration = addStyledField(formPanel, "SÜRE (DAKİKA)");
         txtDirector = addStyledField(formPanel, "YÖNETMEN");
         txtImdb = addStyledField(formPanel, "IMDB PUANI (Örn: 8.5)");
-        txtAge = addStyledField(formPanel, "YAŞ SINIRI (Örn: 13+, Genel İzleyici)");
+        txtAge = addStyledField(formPanel, "YAŞ SINIRI");
         txtLanguage = addStyledField(formPanel, "DİL");
         txtReleaseDate = addStyledField(formPanel, "VİZYON TARİHİ (YYYY-MM-DD)");
 
@@ -101,6 +99,7 @@ public class FilmFormDialog extends JDialog {
         chkVisible.setFocusPainted(false);
         formPanel.add(chkVisible);
 
+        // Eğer ekrana sığmazsa kaydırma butonu
         JScrollPane sp = new JScrollPane(formPanel);
         sp.setBorder(null);
         sp.getVerticalScrollBar().setPreferredSize(new Dimension(5, 0));
@@ -108,6 +107,7 @@ public class FilmFormDialog extends JDialog {
         add(sp, BorderLayout.CENTER);
     }
 
+    // Kaydet butonunun olduğu alt bölüm
     private void initFooter() {
         JPanel footer = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 20));
         footer.setBackground(COLOR_BG);
@@ -119,12 +119,14 @@ public class FilmFormDialog extends JDialog {
         btnSave.setFont(new Font("Segoe UI Bold", Font.PLAIN, 14));
         btnSave.setFocusPainted(false);
         btnSave.setBorderPainted(false);
+        btnSave.setCursor(new Cursor(Cursor.HAND_CURSOR));
         btnSave.addActionListener(e -> onSave());
         footer.add(btnSave);
 
         add(footer, BorderLayout.SOUTH);
     }
 
+    // Film detaylarını düzenleme modunda kutulara yazan metot
     private void fillFields() {
         txtName.setText(existingFilm.getName());
         txtGenre.setText(existingFilm.getGenre());
@@ -141,6 +143,7 @@ public class FilmFormDialog extends JDialog {
         else cmbType.setSelectedItem("Standard 2D");
     }
 
+    // Kaydetme işlemi
     private void onSave() {
         try {
             String name = txtName.getText().trim();
@@ -149,10 +152,11 @@ public class FilmFormDialog extends JDialog {
             float imdb = Float.parseFloat(txtImdb.getText().trim());
             String type = (String) cmbType.getSelectedItem();
 
+            // Seçilen tipe göre uygun classtan nesne oluşturuluyor (Polimorfizm)
             Film film;
-            if (type.equals("Premium 3D")) {
+            if ("Premium 3D".equals(type)) {
                 film = new Premium3D(name, duration, chkVisible.isSelected(), date, txtDirector.getText(), txtAge.getText(), txtGenre.getText(), txtLanguage.getText(), imdb);
-            } else if (type.equals("Animasyon")) {
+            } else if ("Animasyon".equals(type)) {
                 film = new Animation(name, duration, chkVisible.isSelected(), date, txtDirector.getText(), txtAge.getText(), txtGenre.getText(), txtLanguage.getText(), imdb);
             } else {
                 film = new Standard2D(name, duration, chkVisible.isSelected(), date, txtDirector.getText(), txtAge.getText(), txtGenre.getText(), txtLanguage.getText(), imdb);
@@ -160,23 +164,19 @@ public class FilmFormDialog extends JDialog {
 
             if (existingFilm == null) {
                 mediaService.addMedia(film);
-                JOptionPane.showMessageDialog(this, "Film başarıyla eklendi.");
+                JOptionPane.showMessageDialog(this, "Film sisteme eklendi.");
             } else {
-                // DİKKAT: Senin mevcut updateMedia metodun WHERE name = ? kullandığı için
-                // isim değişikliği yaparsan veritabanı kaydı bulamaz.
-                // Bu yüzden nesnenin adının değişmediğinden emin oluyoruz.
                 mediaService.updateMedia(film);
-                JOptionPane.showMessageDialog(this, "Film başarıyla güncellendi.");
+                JOptionPane.showMessageDialog(this, "Film bilgileri güncellendi.");
             }
             dispose();
 
         } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, "Hata: " + ex.getMessage());
+            JOptionPane.showMessageDialog(this, "Giriş Hatası: Lütfen tüm alanları (özellikle tarih ve süre) doğru formatta doldurun.");
         }
     }
 
-    // --- YARDIMCI STİL METOTLARI ---
-
+    // Metin kutusu
     private JTextField addStyledField(JPanel p, String label) {
         JLabel l = new JLabel(label);
         l.setForeground(COLOR_ACCENT);
@@ -194,8 +194,8 @@ public class FilmFormDialog extends JDialog {
         return f;
     }
 
-    private void styleCombo(JComboBox<String> cb, String label) {
-        // Label ve stil işlemleri...
+    // Combobox tasarımı
+    private void styleCombo(JComboBox<String> cb) {
         cb.setBackground(COLOR_CARD);
         cb.setForeground(Color.WHITE);
         cb.setMaximumSize(new Dimension(400, 35));

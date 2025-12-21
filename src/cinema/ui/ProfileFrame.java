@@ -1,11 +1,8 @@
 package cinema.ui;
 
-import cinema.model.content.Media;
-import cinema.model.content.Film;
 import cinema.model.Session;
 import cinema.model.Ticket;
 import cinema.model.people.Customer;
-import cinema.model.people.Manager;
 import cinema.model.people.User;
 import cinema.service.AuthService;
 import cinema.service.TicketService;
@@ -27,15 +24,18 @@ public class ProfileFrame extends JFrame {
 
     private final AuthService authService;
     private final TicketService ticketService;
+
+    // UI Bileşenleri
     private JPanel contentPane;
     private JPanel mainContentPanel;
-    private CardLayout cardLayout;
+    private CardLayout cardLayout; // Sekmeler arası geçiş için
     private int mouseX, mouseY;
 
+    // Form Alanları
     private JTextField txtFirstName, txtLastName, txtBirthDate;
     private JPasswordField txtPassword;
 
-    // Premium Renk Paleti
+    // Renk değişkenleri
     private final Color COLOR_BG = new Color(10, 10, 10);
     private final Color COLOR_CARD = new Color(22, 22, 22);
     private final Color COLOR_ACCENT = new Color(229, 9, 20);
@@ -62,6 +62,7 @@ public class ProfileFrame extends JFrame {
         initMainContent();
     }
 
+    // Üst bar
     private void initHeader() {
         JPanel header = new JPanel(null);
         header.setBackground(COLOR_BG);
@@ -75,14 +76,12 @@ public class ProfileFrame extends JFrame {
 
         JButton btnMin = new JButton("_");
         btnMin.setBounds(460, 15, 35, 35);
-        btnMin.setFont(new Font("Segoe UI Black", Font.BOLD, 22));
         styleControlBtn(btnMin, Color.WHITE);
         btnMin.addActionListener(e -> setState(JFrame.ICONIFIED));
         header.add(btnMin);
 
         JButton btnClose = new JButton("X");
         btnClose.setBounds(500, 15, 35, 35);
-        btnClose.setFont(new Font("Segoe UI Black", Font.BOLD, 18));
         styleControlBtn(btnClose, COLOR_ACCENT);
         btnClose.addActionListener(e -> dispose());
         header.add(btnClose);
@@ -97,6 +96,7 @@ public class ProfileFrame extends JFrame {
         contentPane.add(header, BorderLayout.NORTH);
     }
 
+    // Profil ve Biletlerim butonlarının olduğu alan
     private void initNavigation() {
         JPanel navPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 30, 10));
         navPanel.setBackground(COLOR_BG);
@@ -123,6 +123,7 @@ public class ProfileFrame extends JFrame {
         contentPane.add(navPanel, BorderLayout.CENTER);
     }
 
+    // Seçilen menüye göre değişen ana ekran
     private void initMainContent() {
         cardLayout = new CardLayout();
         mainContentPanel = new JPanel(cardLayout);
@@ -135,6 +136,7 @@ public class ProfileFrame extends JFrame {
         mainContentPanel.setPreferredSize(new Dimension(550, 660));
     }
 
+    // Kullanıcının kendi bilgilerini değiştirebildiği panel
     private JPanel createProfilePanel() {
         User user = authService.getCurrentUser();
         JPanel panel = new JPanel(null);
@@ -186,6 +188,7 @@ public class ProfileFrame extends JFrame {
         return panel;
     }
 
+    // Kullanıcının biletlerini listeleyen panel
     private JPanel createTicketsPanel() {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBackground(COLOR_BG);
@@ -215,15 +218,14 @@ public class ProfileFrame extends JFrame {
         JScrollPane scrollPane = new JScrollPane(ticketListContainer);
         scrollPane.setBorder(null);
         scrollPane.getVerticalScrollBar().setUnitIncrement(16);
-        scrollPane.setBackground(COLOR_BG);
         scrollPane.getViewport().setBackground(COLOR_BG);
-        scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         scrollPane.getVerticalScrollBar().setPreferredSize(new Dimension(5, 0));
 
         panel.add(scrollPane, BorderLayout.CENTER);
         return panel;
     }
 
+    // Biletler için kart oluşturur
     private JPanel createTicketCard(Ticket t) {
         Session session = SessionService.getSession(t.getSession());
         String filmName = (session != null) ? session.getFilm().getName() : "Bilinmeyen Film";
@@ -237,7 +239,7 @@ public class ProfileFrame extends JFrame {
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
                 g2.setColor(COLOR_CARD);
                 g2.fillRoundRect(0, 0, getWidth(), getHeight(), 20, 20);
-                g2.setColor(COLOR_ACCENT);
+                g2.setColor(COLOR_ACCENT); // Sol taraftaki dekoratif kırmızı çizgi
                 g2.fillRoundRect(0, 0, 8, getHeight(), 20, 20);
                 g2.fillRect(4, 0, 4, getHeight());
                 g2.dispose();
@@ -248,7 +250,6 @@ public class ProfileFrame extends JFrame {
         card.setOpaque(false);
         card.setBorder(new EmptyBorder(12, 25, 12, 15));
 
-        // Bilgiler (Sol)
         JPanel infoPanel = new JPanel(new GridLayout(3, 1, 0, 0));
         infoPanel.setOpaque(false);
 
@@ -268,16 +269,15 @@ public class ProfileFrame extends JFrame {
         infoPanel.add(lblDetails);
         infoPanel.add(lblId);
 
-        // Aksiyonlar (Sağ)
         JPanel actionPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 25));
         actionPanel.setOpaque(false);
 
         JButton btnPrint = new JButton("FİŞ OLUŞTUR");
         styleSmallButton(btnPrint, Color.WHITE);
         btnPrint.addActionListener(e -> {
-            boolean ok = TicketPrinter.printToText(t, session);
-            if(ok) JOptionPane.showMessageDialog(this, "Fiş 'tickets_receipts' klasörüne kaydedildi!");
-            else JOptionPane.showMessageDialog(this, "Dosya yazma hatası!");
+            if (TicketPrinter.printToText(t, session)) {
+                JOptionPane.showMessageDialog(this, "Fiş başarıyla oluşturuldu.");
+            }
         });
 
         JButton btnRefund = new JButton("İADE ET");
@@ -294,17 +294,11 @@ public class ProfileFrame extends JFrame {
     }
 
     private void handleTicketRefund(Ticket t) {
-        int choice = JOptionPane.showConfirmDialog(this,
-                "Bu bileti iade etmek istediğinize emin misiniz?\nBu işlem geri alınamaz.",
-                "BİLET İADE", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
-
+        int choice = JOptionPane.showConfirmDialog(this, "Bileti iade etmek istediğinize emin misiniz?", "BİLET İADE", JOptionPane.YES_NO_OPTION);
         if (choice == JOptionPane.YES_OPTION) {
-            boolean success = ticketService.refundTicket(t.getTicketId());
-            if (success) {
-                JOptionPane.showMessageDialog(this, "Bilet başarıyla iade edildi.");
+            if (ticketService.refundTicket(t.getTicketId())) {
+                JOptionPane.showMessageDialog(this, "Bilet iade edildi.");
                 refreshTickets();
-            } else {
-                JOptionPane.showMessageDialog(this, "Hata: Veritabanında eşleşen bilet bulunamadı!");
             }
         }
     }
@@ -316,13 +310,37 @@ public class ProfileFrame extends JFrame {
         mainContentPanel.repaint();
     }
 
-    // --- YARDIMCI STİLLER ---
+    private void handleUpdate() {
+        try {
+            User user = authService.getCurrentUser();
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy");
+            user.setFirstName(txtFirstName.getText().trim());
+            user.setLastName(txtLastName.getText().trim());
+            user.setDateOfBirth(LocalDate.parse(txtBirthDate.getText().trim(), formatter));
+            user.setPassword(new String(txtPassword.getPassword()));
+
+            authService.updateUser(user);
+            JOptionPane.showMessageDialog(this, "Profiliniz başarıyla güncellendi.");
+        } catch (DateTimeParseException e) {
+            JOptionPane.showMessageDialog(this, "Hata: Tarih formatı GG.AA.YYYY olmalıdır.");
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Hata: " + ex.getMessage());
+        }
+    }
+
+    private void handleDeleteAccount() {
+        if (JOptionPane.showConfirmDialog(this, "Hesabınızı silmek üzeresiniz. Bu işlem geri alınamaz!", "DİKKAT", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
+            authService.deleteUser();
+            System.exit(0);
+        }
+    }
+
+    // Görsel metotlar
 
     private void styleSmallButton(JButton btn, Color hoverColor) {
         btn.setFont(new Font("Segoe UI Bold", Font.PLAIN, 9));
-        btn.setBackground(new Color(30, 30, 30));
         btn.setForeground(new Color(180, 180, 180));
-        btn.setFocusPainted(false);
+        btn.setBackground(new Color(30, 30, 30));
         btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
         btn.setBorder(new LineBorder(new Color(55, 55, 55), 1, true));
         btn.setPreferredSize(new Dimension(85, 28));
@@ -354,17 +372,13 @@ public class ProfileFrame extends JFrame {
         tf.setForeground(COLOR_TEXT_MAIN);
         tf.setCaretColor(COLOR_ACCENT);
         tf.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        tf.setBorder(BorderFactory.createCompoundBorder(
-                new LineBorder(COLOR_BORDER, 1, true),
-                new EmptyBorder(0, 15, 0, 15)
-        ));
+        tf.setBorder(BorderFactory.createCompoundBorder(new LineBorder(COLOR_BORDER, 1, true), new EmptyBorder(0, 15, 0, 15)));
     }
 
     private void styleMainButton(JButton btn) {
         btn.setBackground(COLOR_ACCENT);
         btn.setForeground(Color.WHITE);
         btn.setFont(new Font("Segoe UI Bold", Font.PLAIN, 14));
-        btn.setFocusPainted(false);
         btn.setBorderPainted(false);
         btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
     }
@@ -372,13 +386,10 @@ public class ProfileFrame extends JFrame {
     private void styleControlBtn(JButton btn, Color hover) {
         btn.setContentAreaFilled(false);
         btn.setBorderPainted(false);
-        btn.setFocusPainted(false);
-        btn.setMargin(new Insets(0, 0, 0, 0));
-        btn.setForeground(COLOR_TEXT_SUB);
-        btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        btn.setForeground(new Color(100, 100, 100));
         btn.addMouseListener(new MouseAdapter() {
             public void mouseEntered(MouseEvent e) { btn.setForeground(hover); }
-            public void mouseExited(MouseEvent e) { btn.setForeground(COLOR_TEXT_SUB); }
+            public void mouseExited(MouseEvent e) { btn.setForeground(new Color(100, 100, 100)); }
         });
     }
 
@@ -386,7 +397,6 @@ public class ProfileFrame extends JFrame {
         JButton btn = new JButton(text);
         btn.setFont(new Font("Segoe UI Bold", Font.PLAIN, 12));
         btn.setContentAreaFilled(false);
-        btn.setFocusPainted(false);
         btn.setBorder(active ? BorderFactory.createMatteBorder(0, 0, 3, 0, COLOR_ACCENT) : null);
         btn.setForeground(active ? COLOR_TEXT_MAIN : COLOR_TEXT_SUB);
         btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
@@ -404,37 +414,9 @@ public class ProfileFrame extends JFrame {
         selected.setForeground(COLOR_TEXT_MAIN);
     }
 
-    private void handleUpdate() {
-        try {
-            User user = authService.getCurrentUser();
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy");
-            user.setFirstName(txtFirstName.getText());
-            user.setLastName(txtLastName.getText());
-            user.setDateOfBirth(LocalDate.parse(txtBirthDate.getText(), formatter));
-            user.setPassword(new String(txtPassword.getPassword()));
-            authService.updateUser(user);
-            JOptionPane.showMessageDialog(this, "Profil güncellendi!");
-        } catch (DateTimeParseException e) {
-            JOptionPane.showMessageDialog(this, "Hata: Tarih formatı GG.AA.YYYY olmalıdır!");
-        } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, "Hata: " + ex.getMessage());
-        }
-    }
-
-    private void handleDeleteAccount() {
-        if (JOptionPane.showConfirmDialog(this, "Hesabınızı silmek istiyor musunuz?", "DİKKAT", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
-            authService.deleteUser();
-            System.exit(0);
-        }
-    }
-
     public void showTicketsTab() {
-        // Navigasyon butonlarının görselini güncellemek istersen manuel tetikleyebilirsin
-        // veya sadece cardLayout'u değiştirebilirsin:
         if (cardLayout != null && mainContentPanel != null) {
             cardLayout.show(mainContentPanel, "TICKETS");
-            // Not: Eğer navigasyon butonlarının altındaki kırmızı çizgiyi de
-            // güncellemek istersen resetNavButtons metodunu burada çağırabilirsin.
         }
     }
 }

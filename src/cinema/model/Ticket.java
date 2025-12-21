@@ -1,23 +1,22 @@
 package cinema.model;
 
-import cinema.exception.InvalidInputException;
-import cinema.model.people.Customer;
-
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.UUID;
 
 public class Ticket {
+
+    // Bilete ait alanlar
     private String ticketId;
     private final LocalDateTime purchaseTime;
     private final double finalPrice;
-    private final String session;
-    private final String customer;
-    private final String seatCode;
+
+    private final String session; // Seans bilgisi (ID)
+    private final String customer; // Müşteri bilgisi (E-posta)
+    private final String seatCode; // Seçilen koltuk
 
     public Ticket(String session, String customer, String seatCode, double finalPrice) {
-        this.ticketId = UUID.randomUUID().toString();
-        this.purchaseTime = LocalDateTime.now();
+        this.ticketId = UUID.randomUUID().toString(); // Otomatik  ID üretimi
+        this.purchaseTime = LocalDateTime.now(); // Kayıt anındaki zamanı alır
         this.finalPrice = finalPrice;
         this.session = session;
         this.customer = customer;

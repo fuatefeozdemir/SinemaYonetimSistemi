@@ -4,6 +4,8 @@ import cinema.model.Session;
 import cinema.model.Hall;
 import cinema.model.content.Media;
 import java.sql.*;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -104,5 +106,28 @@ public class H2SessionRepository {
             e.printStackTrace();
         }
         return sessions;
+    }
+
+
+    public static void deleteSession(String film, String hall, String start) {
+        String sql = "DELETE FROM sessions WHERE media_name = ? AND hall_name = ? AND start_time = ?";
+
+        try (Connection conn = DriverManager.getConnection(URL);
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setString(1, film);
+            pstmt.setString(2, hall);
+
+            // Hatanın çözümü: Önce LocalDateTime olarak parse et, sonra Timestamp'e çevir
+            // Tablodaki format "yyyy-MM-dd HH:mm" olduğu için saniyeyi biz ekliyoruz veya uygun formatter kullanıyoruz
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+            LocalDateTime localDateTime = LocalDateTime.parse(start, formatter);
+
+            pstmt.setTimestamp(3, Timestamp.valueOf(localDateTime));
+
+        } catch (Exception e) {
+            System.err.println("Seans silme hatası: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 }

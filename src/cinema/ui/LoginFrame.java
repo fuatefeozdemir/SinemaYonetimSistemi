@@ -7,11 +7,14 @@ import cinema.service.TicketService;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
-import javax.swing.border.MatteBorder;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.RoundRectangle2D;
 
+/**
+ * Uygulamanın giriş kapısı. Kullanıcı bilgilerini doğrular
+ * ve yetkiye göre (Müdür, Kasiyer, Müşteri) ilgili paneli açar.
+ */
 public class LoginFrame extends JFrame {
 
     private final AuthService authService;
@@ -22,11 +25,10 @@ public class LoginFrame extends JFrame {
     private JPasswordField txtPassword;
     private int mouseX, mouseY;
 
-    // Renk Paleti (Diğer ekranlarla tam uyumlu)
+    // Renk değişkenleri
     private final Color COLOR_BG = new Color(10, 10, 10);
     private final Color COLOR_CARD = new Color(22, 22, 22);
     private final Color COLOR_ACCENT = new Color(229, 9, 20);
-    private final Color COLOR_TEXT_MAIN = new Color(245, 245, 245);
     private final Color COLOR_TEXT_SUB = new Color(150, 150, 150);
 
     public LoginFrame(AuthService authService, TicketService ticketService) {
@@ -37,14 +39,13 @@ public class LoginFrame extends JFrame {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(450, 600);
         setLocationRelativeTo(null);
-        // Oval Köşeler
         setShape(new RoundRectangle2D.Double(0, 0, 450, 600, 30, 30));
 
         contentPane = new JPanel();
         contentPane.setBackground(COLOR_BG);
         contentPane.setBorder(new LineBorder(new Color(35, 35, 35), 1));
-        setContentPane(contentPane);
         contentPane.setLayout(null);
+        setContentPane(contentPane);
 
         initHeader();
         initTitle();
@@ -52,11 +53,11 @@ public class LoginFrame extends JFrame {
         initFooter();
     }
 
+    // Üst bar
     private void initHeader() {
         JPanel headerPanel = new JPanel(null);
         headerPanel.setBackground(COLOR_BG);
         headerPanel.setBounds(0, 0, 450, 50);
-        contentPane.add(headerPanel);
 
         headerPanel.addMouseListener(new MouseAdapter() {
             public void mousePressed(MouseEvent e) { mouseX = e.getX(); mouseY = e.getY(); }
@@ -65,7 +66,6 @@ public class LoginFrame extends JFrame {
             public void mouseDragged(MouseEvent e) { setLocation(getX() + e.getX() - mouseX, getY() + e.getY() - mouseY); }
         });
 
-        // Minimize Butonu (_)
         JButton btnMin = new JButton("_");
         btnMin.setBounds(370, 10, 35, 35);
         btnMin.setFont(new Font("Segoe UI Black", Font.BOLD, 22));
@@ -73,15 +73,17 @@ public class LoginFrame extends JFrame {
         btnMin.addActionListener(e -> setState(JFrame.ICONIFIED));
         headerPanel.add(btnMin);
 
-        // Kapatma Butonu (X)
         JButton btnClose = new JButton("X");
         btnClose.setBounds(410, 10, 35, 35);
         btnClose.setFont(new Font("Segoe UI Black", Font.BOLD, 18));
         styleControlBtn(btnClose, COLOR_ACCENT);
         btnClose.addActionListener(e -> System.exit(0));
         headerPanel.add(btnClose);
+
+        contentPane.add(headerPanel);
     }
 
+    // Sinema yazısı ve karşılama metni
     private void initTitle() {
         JLabel lblTitle = new JLabel("SİNEMA");
         lblTitle.setHorizontalAlignment(SwingConstants.CENTER);
@@ -98,26 +100,17 @@ public class LoginFrame extends JFrame {
         contentPane.add(lblSubtitle);
     }
 
+    // Kullanıcı giriş alanları
     private void initForm() {
         int fieldX = 75;
 
-        JLabel lblUser = new JLabel("E-POSTA ADRESİ");
-        lblUser.setForeground(COLOR_ACCENT);
-        lblUser.setFont(new Font("Segoe UI Bold", Font.PLAIN, 11));
-        lblUser.setBounds(fieldX, 180, 300, 20);
-        contentPane.add(lblUser);
-
+        addInputLabel("E-POSTA ADRESİ", fieldX, 180);
         txtUsername = new JTextField();
         styleTextField(txtUsername);
         txtUsername.setBounds(fieldX, 205, 300, 42);
         contentPane.add(txtUsername);
 
-        JLabel lblPass = new JLabel("ŞİFRE");
-        lblPass.setForeground(COLOR_ACCENT);
-        lblPass.setFont(new Font("Segoe UI Bold", Font.PLAIN, 11));
-        lblPass.setBounds(fieldX, 265, 300, 20);
-        contentPane.add(lblPass);
-
+        addInputLabel("ŞİFRE", fieldX, 265);
         txtPassword = new JPasswordField();
         styleTextField(txtPassword);
         txtPassword.setBounds(fieldX, 290, 300, 42);
@@ -128,10 +121,8 @@ public class LoginFrame extends JFrame {
         btnLogin.setBackground(COLOR_ACCENT);
         btnLogin.setForeground(Color.WHITE);
         btnLogin.setFont(new Font("Segoe UI Bold", Font.PLAIN, 15));
-        btnLogin.setFocusPainted(false);
-        btnLogin.setBorderPainted(false);
         btnLogin.setCursor(new Cursor(Cursor.HAND_CURSOR));
-
+        btnLogin.setBorderPainted(false);
         btnLogin.addActionListener(this::handleLogin);
         contentPane.add(btnLogin);
 
@@ -142,6 +133,7 @@ public class LoginFrame extends JFrame {
         lblRegister.setFont(new Font("Segoe UI Semibold", Font.PLAIN, 13));
         lblRegister.setBounds(0, 440, 450, 30);
 
+        // Kayıt ekranına yönlendirir
         lblRegister.addMouseListener(new MouseAdapter() {
             public void mouseClicked(MouseEvent e) {
                 new RegisterFrame(authService, ticketService).setVisible(true);
@@ -152,7 +144,7 @@ public class LoginFrame extends JFrame {
         });
         contentPane.add(lblRegister);
 
-        getRootPane().setDefaultButton(btnLogin);
+        getRootPane().setDefaultButton(btnLogin); // Enter tuşuyla giriş yapılmasını sağlar
     }
 
     private void initFooter() {
@@ -164,6 +156,16 @@ public class LoginFrame extends JFrame {
         contentPane.add(lblFooter);
     }
 
+    // Giriş kutuları
+    private void addInputLabel(String text, int x, int y) {
+        JLabel lbl = new JLabel(text);
+        lbl.setForeground(COLOR_ACCENT);
+        lbl.setFont(new Font("Segoe UI Bold", Font.PLAIN, 11));
+        lbl.setBounds(x, y, 300, 20);
+        contentPane.add(lbl);
+    }
+
+    // Metin kutularının teması
     private void styleTextField(JTextField field) {
         field.setBackground(COLOR_CARD);
         field.setForeground(Color.WHITE);
@@ -174,11 +176,10 @@ public class LoginFrame extends JFrame {
                 new EmptyBorder(0, 10, 0, 10)
         ));
 
+        // Tıklandığında kutu etrafında vurgu oluşturur
         field.addFocusListener(new FocusAdapter() {
-            @Override
-            public void focusGained(FocusEvent e) { field.setBorder(new LineBorder(COLOR_ACCENT, 1, true)); }
-            @Override
-            public void focusLost(FocusEvent e) { field.setBorder(new LineBorder(new Color(40, 40, 40), 1, true)); }
+            @Override public void focusGained(FocusEvent e) { field.setBorder(new LineBorder(COLOR_ACCENT, 1, true)); }
+            @Override public void focusLost(FocusEvent e) { field.setBorder(new LineBorder(new Color(40, 40, 40), 1, true)); }
         });
     }
 
@@ -186,7 +187,6 @@ public class LoginFrame extends JFrame {
         btn.setContentAreaFilled(false);
         btn.setBorderPainted(false);
         btn.setFocusPainted(false);
-        btn.setMargin(new Insets(0, 0, 0, 0));
         btn.setForeground(new Color(100, 100, 100));
         btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
         btn.addMouseListener(new MouseAdapter() {
@@ -195,8 +195,9 @@ public class LoginFrame extends JFrame {
         });
     }
 
+    // Kullanıcı tipine göre açılacak ekran belirlenir
     private void handleLogin(ActionEvent e) {
-        String email = txtUsername.getText();
+        String email = txtUsername.getText().trim();
         String password = new String(txtPassword.getPassword());
 
         if (email.isEmpty() || password.isEmpty()) {
@@ -208,22 +209,19 @@ public class LoginFrame extends JFrame {
             User loggedInUser = authService.login(email, password);
 
             if (loggedInUser != null) {
-                // HATA BURADAYDI: ManagerMainFrame artık ticketService istiyor.
                 if (loggedInUser instanceof cinema.model.people.Manager) {
                     new ManagerMainFrame(authService, ticketService).setVisible(true);
-                    this.dispose();
                 }
                 else if (loggedInUser instanceof cinema.model.people.Customer) {
                     new CustomerMainFrame(authService, ticketService).setVisible(true);
-                    this.dispose();
                 }
                 else if (loggedInUser instanceof cinema.model.people.Cashier) {
                     new CashierMainFrame(authService, ticketService).setVisible(true);
-                    this.dispose();
                 }
+                this.dispose(); // Giriş yapıldıysa bu ekran kapatılır
             }
         } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, "Hatalı e-posta veya şifre!", "Giriş Başarısız", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "E-posta veya şifre hatalı!", "Giriş Başarısız", JOptionPane.ERROR_MESSAGE);
         }
     }
 }

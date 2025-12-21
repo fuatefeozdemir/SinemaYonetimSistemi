@@ -21,20 +21,21 @@ public class CashierMainFrame extends JFrame {
 
     private JPanel contentPane;
     private int mouseX, mouseY;
+
     private JComboBox<String> cmbFilm;
     private JComboBox<String> cmbSession;
     private JTextField txtCustomerEmail;
 
+    // Servis bağlantıları
     private final AuthService authService;
     private final TicketService ticketService;
     private final MediaService mediaService;
     private final SessionService sessionService = new SessionService();
 
-    // Renk Paleti (Diğer Frame'ler ile Tam Uyumlu)
+    // Renk değişkenleri
     private final Color COLOR_BG = new Color(10, 10, 10);
     private final Color COLOR_CARD = new Color(22, 22, 22);
     private final Color COLOR_ACCENT = new Color(229, 9, 20);
-    private final Color COLOR_TEXT_MAIN = new Color(245, 245, 245);
     private final Color COLOR_TEXT_SUB = new Color(150, 150, 150);
     private final Color COLOR_BORDER = new Color(35, 35, 35);
 
@@ -43,6 +44,7 @@ public class CashierMainFrame extends JFrame {
         this.ticketService = ticketService;
         this.mediaService = new MediaService();
 
+        // Pencere ayarları
         setUndecorated(true);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(1000, 700);
@@ -56,16 +58,15 @@ public class CashierMainFrame extends JFrame {
 
         initHeader();
         initBody();
-
-        refreshFilms();
+        refreshFilms(); // Açılışta film listesini doldur
     }
 
+    // Profil ve pencere ayarlarını içeren üstteki bar
     private void initHeader() {
         JPanel header = new JPanel(null);
         header.setBounds(0, 0, 1000, 90);
         header.setBackground(COLOR_BG);
 
-        // Logo ve Başlık
         JLabel lblLogo = new JLabel("SİNEMA");
         lblLogo.setFont(new Font("Segoe UI Black", Font.BOLD, 30));
         lblLogo.setForeground(COLOR_ACCENT);
@@ -78,7 +79,7 @@ public class CashierMainFrame extends JFrame {
         lblSub.setBounds(195, 32, 200, 30);
         header.add(lblSub);
 
-        // Sağ Üst Grup
+        // Giriş yapan kullanıcı ismi
         String name = (authService.getCurrentUser() != null) ? authService.getCurrentUser().getFirstName() : "Kasiyer";
         JLabel lblName = new JLabel(name.toUpperCase());
         lblName.setForeground(Color.WHITE);
@@ -103,7 +104,7 @@ public class CashierMainFrame extends JFrame {
         });
         header.add(btnLogout);
 
-        // Pencere Kontrolleri
+        // Kapatma ve Küçültme butonları
         JButton btnMin = new JButton("_");
         btnMin.setBounds(900, 15, 40, 35);
         btnMin.setFont(new Font("Segoe UI Black", Font.BOLD, 22));
@@ -118,6 +119,7 @@ public class CashierMainFrame extends JFrame {
         btnClose.addActionListener(e -> System.exit(0));
         header.add(btnClose);
 
+        // Pencereyi sürükleme mantığı
         header.addMouseListener(new MouseAdapter() {
             public void mousePressed(MouseEvent e) { mouseX = e.getX(); mouseY = e.getY(); }
         });
@@ -128,6 +130,7 @@ public class CashierMainFrame extends JFrame {
         contentPane.add(header);
     }
 
+    // Bilet satış kısmının olduğu ana kısım
     private void initBody() {
         JPanel formCard = new JPanel(null) {
             @Override
@@ -149,7 +152,6 @@ public class CashierMainFrame extends JFrame {
         lblTitle.setBounds(50, 40, 300, 30);
         formCard.add(lblTitle);
 
-        // Film Seçimi
         addLabel(formCard, "FİLM SEÇİN", 100);
         cmbFilm = new JComboBox<>();
         cmbFilm.setBounds(50, 125, 500, 42);
@@ -157,44 +159,37 @@ public class CashierMainFrame extends JFrame {
         cmbFilm.addActionListener(e -> refreshSessions());
         formCard.add(cmbFilm);
 
-        // Seans Seçimi
         addLabel(formCard, "SEANS SEÇİN", 190);
         cmbSession = new JComboBox<>();
         cmbSession.setBounds(50, 215, 500, 42);
         styleComboBox(cmbSession);
         formCard.add(cmbSession);
 
-        // Müşteri E-posta
         addLabel(formCard, "MÜŞTERİ E-POSTA ADRESİ", 280);
         txtCustomerEmail = new JTextField();
         txtCustomerEmail.setBounds(50, 305, 500, 42);
         styleTextField(txtCustomerEmail);
         formCard.add(txtCustomerEmail);
 
-        // Satış Butonu
         JButton btnSell = new JButton("KOLTUK SEÇİMİNE GİT →");
         btnSell.setBounds(50, 385, 500, 55);
         btnSell.setBackground(COLOR_ACCENT);
         btnSell.setForeground(Color.WHITE);
         btnSell.setFont(new Font("Segoe UI Black", Font.BOLD, 14));
-        btnSell.setFocusPainted(false);
-        btnSell.setBorderPainted(false);
         btnSell.setCursor(new Cursor(Cursor.HAND_CURSOR));
         btnSell.addActionListener(e -> {
-            String selectedMovie = (String) cmbFilm.getSelectedItem();
-            String selectedSessionTime = (String) cmbSession.getSelectedItem();
-            String customerEmail = txtCustomerEmail.getText().trim();
+            String movie = (String) cmbFilm.getSelectedItem();
+            String session = (String) cmbSession.getSelectedItem();
+            String email = txtCustomerEmail.getText().trim();
 
-            if (selectedMovie == null || customerEmail.isEmpty() || selectedSessionTime == null || selectedSessionTime.contains("aktif seans yok")) {
-                JOptionPane.showMessageDialog(this, "Lütfen tüm alanları eksiksiz doldurun!", "Hata", JOptionPane.WARNING_MESSAGE);
+            if (movie == null || email.isEmpty() || session == null || session.contains("aktif seans yok")) {
+                JOptionPane.showMessageDialog(this, "Lütfen tüm alanları doldurun!", "Hata", JOptionPane.WARNING_MESSAGE);
                 return;
             }
-            new SeatSelectionFrame(selectedMovie, selectedSessionTime, customerEmail, authService, ticketService).setVisible(true);
+            new SeatSelectionFrame(movie, session, email, authService, ticketService).setVisible(true);
         });
         formCard.add(btnSell);
     }
-
-    // --- YARDIMCI METOTLAR ---
 
     private void addLabel(JPanel p, String text, int y) {
         JLabel lbl = new JLabel(text);
@@ -209,7 +204,6 @@ public class CashierMainFrame extends JFrame {
         cb.setForeground(Color.WHITE);
         cb.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         cb.setBorder(new LineBorder(COLOR_BORDER, 1, true));
-        // ComboBox'ın açılır menüsünü de stilize etmek gerekebilir (UI Manager üzerinden)
     }
 
     private void styleTextField(JTextField tf) {
@@ -240,15 +234,14 @@ public class CashierMainFrame extends JFrame {
         btn.setContentAreaFilled(false);
         btn.setBorderPainted(false);
         btn.setFocusPainted(false);
-        btn.setMargin(new Insets(0, 0, 0, 0));
         btn.setForeground(new Color(100, 100, 100));
-        btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
         btn.addMouseListener(new MouseAdapter() {
             public void mouseEntered(MouseEvent e) { btn.setForeground(hover); }
             public void mouseExited(MouseEvent e) { btn.setForeground(new Color(100, 100, 100)); }
         });
     }
 
+    // Film listesini veritabanından çeker
     private void refreshFilms() {
         cmbFilm.removeAllItems();
         try {
@@ -259,6 +252,7 @@ public class CashierMainFrame extends JFrame {
         } catch (Exception e) { e.printStackTrace(); }
     }
 
+    // Seçili filme ait seansları çeker
     private void refreshSessions() {
         cmbSession.removeAllItems();
         String selectedFilm = (String) cmbFilm.getSelectedItem();

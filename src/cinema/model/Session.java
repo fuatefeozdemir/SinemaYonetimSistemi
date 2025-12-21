@@ -1,24 +1,23 @@
 package cinema.model;
 
 import cinema.exception.InvalidInputException;
-import cinema.exception.SeatOccupiedException;
 import cinema.model.content.Media;
-
 import java.time.LocalDateTime;
 
 public class Session {
 
-    private final String sessionId; // Seans ID'si
-    private final Hall hall; // Seans hangi salonda
-    private final Media film; // Seanstaki film
+    // Seansa ait alanlar
+    private final String sessionId;
+    private final Media film;
+    private final Hall hall;
     private final LocalDateTime startTime;
     private final LocalDateTime endTime;
 
-
     public Session(String sessionId, Hall hall, Media film, LocalDateTime startTime, LocalDateTime endTime) {
 
+        // Tarih kontrolü
         if (endTime.isBefore(startTime)) {
-            throw new InvalidInputException("Seans bitiş saati başlangıç saatinden önce olamaz.");
+            throw new InvalidInputException("Hata: Seans bitiş saati başlangıçtan önce olamaz.");
         }
 
         this.sessionId = sessionId;
@@ -32,12 +31,16 @@ public class Session {
         return sessionId;
     }
 
-    public Hall getHall() {
-        return hall;
-    }
-
     public Media getFilm() {
         return film;
+    }
+
+    public Media getMedia() {
+        return film;
+    }
+
+    public Hall getHall() {
+        return hall;
     }
 
     public LocalDateTime getStartTime() {

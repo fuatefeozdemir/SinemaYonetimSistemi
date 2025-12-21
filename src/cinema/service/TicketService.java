@@ -4,7 +4,7 @@ import cinema.H2.H2SessionRepository;
 import cinema.H2.H2TicketRepository;
 import cinema.model.Session;
 import cinema.model.Ticket;
-import cinema.model.content.Film; // Film sınıfı eklendi
+import cinema.model.content.Film;
 import cinema.model.people.Cashier;
 import cinema.model.people.Customer;
 import cinema.repository.TicketRepository;
@@ -21,13 +21,13 @@ public class TicketService {
         this.ticketRepository = ticketRepository;
     }
 
-    // Müşteri bilet satışı
+    // Müşterinin kendi başına yaptığı bilet alımları
     public void buyTicket(String sessionId, Customer customer, String seatCode) {
         Ticket ticket = processTicket(sessionId, customer, seatCode);
         ticketRepository.saveTicket(ticket);
     }
 
-    // Kasiyer bilet satışı (Overloading)
+    // Kasiyer aracılığıyla yapılan bilet alımları (Overloading)
     public void buyTicket(String sessionId, Customer customer, String seatCode, Cashier cashier) {
         Ticket ticket = processTicket(sessionId, customer, seatCode);
         ticketRepository.saveTicket(ticket);
@@ -37,6 +37,7 @@ public class TicketService {
         }
     }
 
+    // Bilet oluşturma sürecinde yapılması gereken işlemleri (Senas kontrolü, fiyat hesaplama) yapar
     private Ticket processTicket(String sessionId, Customer customer, String seatCode) {
         Session session = H2SessionRepository.getSession(sessionId);
 
@@ -45,42 +46,38 @@ public class TicketService {
         }
 
         boolean isDiscounted = calculateDiscountStatus(customer);
-        double finalPrice = 100.0;
+        double finalPrice = 100.0; // Fiyat hesaplanamazsa varsayılan fiyat 100 TL
 
         if (session.getFilm() instanceof Film film) {
             finalPrice = film.calculatePrice(isDiscounted);
-        } else {
-            System.out.println("Uyarı: Bu içerik bir Film türünde değil, standart fiyat uygulandı.");
         }
 
         Ticket newTicket = new Ticket(session.getSessionId(), customer.getEmail(), seatCode, finalPrice);
 
-        // Her bilet satışı için müşteriye 5 puan ekler
+        // Müşteriye her bilet için 5 sadakat puanı ekleniyor
         customer.addLoyaltyPoints(5);
 
         return newTicket;
     }
 
-    // İndirim uygulanıp uygulanmayacağına bakan metot
+    // İndirim durumunu kontrol eder
     private boolean calculateDiscountStatus(Customer customer) {
         if (customer.getDateOfBirth() == null) return false;
         long age = ChronoUnit.YEARS.between(customer.getDateOfBirth(), LocalDate.now());
-        // Yaş 18 den küçükse indirim uygulanır
         return age < 18;
     }
 
-    public List<Session> getSessionsForMovie(String movieTitle) {
-        return ticketRepository.getSessionsForMovie(movieTitle);
-    }
-
+    // Bir seanstaki rezerve edilmiş koltukları listeler
     public List<String> getOccupiedSeats(String sessionId) {
         return ticketRepository.getOccupiedSeats(sessionId);
     }
 
+    // Giriş yapmış müşterinin geçmiş biletlerini getirir
     public List<Ticket> getMyTickets(String email) {
         return H2TicketRepository.getTicketsByCustomerEmail(email);
     }
 
+    // Bileti iptal eder ve koltuğu boşa çıkarır
     public boolean refundTicket(String ticketId) {
         return H2TicketRepository.deleteTicket(ticketId);
     }

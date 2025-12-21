@@ -2,14 +2,19 @@ package cinema.model;
 
 import cinema.exception.InvalidInputException;
 
+
 public class Hall {
-    private final String hallName; // Salon adı
-    private final int rowCount; // Satır sayısı
-    private final int columnCount; // Sütun sayısı
+
+    // Salonun alanları
+    private final String hallName;
+    private final int rowCount;
+    private final int columnCount;
 
     public Hall(String hallName, int rowCount, int columnCount) {
+
+        // Salon boyutlarını kontrol eder
         if (rowCount <= 0 || columnCount <= 0) {
-            throw new InvalidInputException("Salon satır ve sütun sayıları negatif olamaz.");
+            throw new InvalidInputException("Hata: Satır ve sütun sayıları 0'dan büyük olmalıdır.");
         }
 
         this.hallName = hallName;
@@ -29,6 +34,3 @@ public class Hall {
         return columnCount;
     }
 }
-
-
-
