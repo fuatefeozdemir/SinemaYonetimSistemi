@@ -1,14 +1,17 @@
 package cinema.H2;
 
 import cinema.model.Hall;
+import cinema.repository.HallRepository;
+
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class H2HallRepository {
+public class H2HallRepository implements HallRepository {
     private static final String URL = "jdbc:h2:./data/CINEMA_DB;AUTO_SERVER=TRUE;DB_CLOSE_DELAY=-1";
 
-    public static void initialize() {
+    @Override
+    public void initialize() {
         try (Connection conn = DriverManager.getConnection(URL);
              Statement stmt = conn.createStatement()) {
 
@@ -22,7 +25,8 @@ public class H2HallRepository {
         }
     }
 
-    public static void saveHall(Hall hall) {
+    @Override
+    public void saveHall(Hall hall) {
         String sql = "INSERT INTO halls (hall_name, row_count, column_count) VALUES (?, ?, ?)";
         try (Connection conn = DriverManager.getConnection(URL);
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -36,7 +40,8 @@ public class H2HallRepository {
         }
     }
 
-    public static Hall getHall(String name) {
+    @Override
+    public Hall getHall(String name) {
         String sql = "SELECT * FROM halls WHERE hall_name = ?";
         try (Connection conn = DriverManager.getConnection(URL);
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -57,7 +62,8 @@ public class H2HallRepository {
         return null;
     }
 
-    public static void updateHall(String oldName, String newName, int rows, int cols) {
+    @Override
+    public void updateHall(String oldName, String newName, int rows, int cols) {
         // Aynı bağlantı (Connection) üzerinden iki tabloyu da güncelleyeceğiz
         try (Connection conn = DriverManager.getConnection(URL)) {
             conn.setAutoCommit(false); // İşlemi bir bütün (Transaction) olarak başlat
@@ -93,7 +99,8 @@ public class H2HallRepository {
         }
     }
 
-    public static List<Hall> getAllHalls() {
+    @Override
+    public List<Hall> getAllHalls() {
         List<Hall> halls = new ArrayList<>();
         String sql = "SELECT * FROM halls";
         try (Connection conn = DriverManager.getConnection(URL);
@@ -113,7 +120,8 @@ public class H2HallRepository {
         return halls;
     }
 
-    public static void deleteHall(String name) {
+    @Override
+    public void deleteHall(String name) {
         String sql = "DELETE FROM halls WHERE hall_name = ?";
         try (Connection conn = DriverManager.getConnection(URL);
              PreparedStatement pstmt = conn.prepareStatement(sql)) {

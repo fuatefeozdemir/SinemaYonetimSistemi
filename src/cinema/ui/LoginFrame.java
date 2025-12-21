@@ -1,8 +1,7 @@
 package cinema.ui;
 
-import cinema.service.AuthService;
 import cinema.model.people.User;
-import cinema.service.TicketService;
+import cinema.util.ServiceContainer;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -17,8 +16,7 @@ import java.awt.geom.RoundRectangle2D;
  */
 public class LoginFrame extends JFrame {
 
-    private final AuthService authService;
-    private final TicketService ticketService;
+    private final ServiceContainer serviceContainer;
 
     private JPanel contentPane;
     private JTextField txtUsername;
@@ -31,9 +29,8 @@ public class LoginFrame extends JFrame {
     private final Color COLOR_ACCENT = new Color(229, 9, 20);
     private final Color COLOR_TEXT_SUB = new Color(150, 150, 150);
 
-    public LoginFrame(AuthService authService, TicketService ticketService) {
-        this.authService = authService;
-        this.ticketService = ticketService;
+    public LoginFrame(ServiceContainer serviceContainer) {
+        this.serviceContainer = serviceContainer;
 
         setUndecorated(true);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -60,10 +57,15 @@ public class LoginFrame extends JFrame {
         headerPanel.setBounds(0, 0, 450, 50);
 
         headerPanel.addMouseListener(new MouseAdapter() {
-            public void mousePressed(MouseEvent e) { mouseX = e.getX(); mouseY = e.getY(); }
+            public void mousePressed(MouseEvent e) {
+                mouseX = e.getX();
+                mouseY = e.getY();
+            }
         });
         headerPanel.addMouseMotionListener(new MouseMotionAdapter() {
-            public void mouseDragged(MouseEvent e) { setLocation(getX() + e.getX() - mouseX, getY() + e.getY() - mouseY); }
+            public void mouseDragged(MouseEvent e) {
+                setLocation(getX() + e.getX() - mouseX, getY() + e.getY() - mouseY);
+            }
         });
 
         JButton btnMin = new JButton("_");
@@ -136,11 +138,17 @@ public class LoginFrame extends JFrame {
         // Kayıt ekranına yönlendirir
         lblRegister.addMouseListener(new MouseAdapter() {
             public void mouseClicked(MouseEvent e) {
-                new RegisterFrame(authService, ticketService).setVisible(true);
+                new RegisterFrame(serviceContainer).setVisible(true);
                 dispose();
             }
-            public void mouseEntered(MouseEvent e) { lblRegister.setForeground(COLOR_ACCENT); }
-            public void mouseExited(MouseEvent e) { lblRegister.setForeground(COLOR_TEXT_SUB); }
+
+            public void mouseEntered(MouseEvent e) {
+                lblRegister.setForeground(COLOR_ACCENT);
+            }
+
+            public void mouseExited(MouseEvent e) {
+                lblRegister.setForeground(COLOR_TEXT_SUB);
+            }
         });
         contentPane.add(lblRegister);
 
@@ -178,8 +186,15 @@ public class LoginFrame extends JFrame {
 
         // Tıklandığında kutu etrafında vurgu oluşturur
         field.addFocusListener(new FocusAdapter() {
-            @Override public void focusGained(FocusEvent e) { field.setBorder(new LineBorder(COLOR_ACCENT, 1, true)); }
-            @Override public void focusLost(FocusEvent e) { field.setBorder(new LineBorder(new Color(40, 40, 40), 1, true)); }
+            @Override
+            public void focusGained(FocusEvent e) {
+                field.setBorder(new LineBorder(COLOR_ACCENT, 1, true));
+            }
+
+            @Override
+            public void focusLost(FocusEvent e) {
+                field.setBorder(new LineBorder(new Color(40, 40, 40), 1, true));
+            }
         });
     }
 
@@ -190,8 +205,13 @@ public class LoginFrame extends JFrame {
         btn.setForeground(new Color(100, 100, 100));
         btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
         btn.addMouseListener(new MouseAdapter() {
-            public void mouseEntered(MouseEvent e) { btn.setForeground(hover); }
-            public void mouseExited(MouseEvent e) { btn.setForeground(new Color(100, 100, 100)); }
+            public void mouseEntered(MouseEvent e) {
+                btn.setForeground(hover);
+            }
+
+            public void mouseExited(MouseEvent e) {
+                btn.setForeground(new Color(100, 100, 100));
+            }
         });
     }
 
@@ -206,17 +226,15 @@ public class LoginFrame extends JFrame {
         }
 
         try {
-            User loggedInUser = authService.login(email, password);
+            User loggedInUser = serviceContainer.getAuthService().login(email, password);
 
             if (loggedInUser != null) {
                 if (loggedInUser instanceof cinema.model.people.Manager) {
-                    new ManagerMainFrame(authService, ticketService).setVisible(true);
-                }
-                else if (loggedInUser instanceof cinema.model.people.Customer) {
-                    new CustomerMainFrame(authService, ticketService).setVisible(true);
-                }
-                else if (loggedInUser instanceof cinema.model.people.Cashier) {
-                    new CashierMainFrame(authService, ticketService).setVisible(true);
+                    new ManagerMainFrame(serviceContainer).setVisible(true);
+                } else if (loggedInUser instanceof cinema.model.people.Customer) {
+                    new CustomerMainFrame(serviceContainer).setVisible(true);
+                } else if (loggedInUser instanceof cinema.model.people.Cashier) {
+                    new CashierMainFrame(serviceContainer).setVisible(true);
                 }
                 this.dispose(); // Giriş yapıldıysa bu ekran kapatılır
             }

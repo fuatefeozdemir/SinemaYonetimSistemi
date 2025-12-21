@@ -3,16 +3,18 @@ package cinema.H2;
 import cinema.model.Session;
 import cinema.model.Hall;
 import cinema.model.content.Media;
+import cinema.repository.SessionRepository;
+
 import java.sql.*;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
-public class H2SessionRepository {
+public class H2SessionRepository implements SessionRepository {
     private static final String URL = "jdbc:h2:./data/CINEMA_DB;AUTO_SERVER=TRUE;DB_CLOSE_DELAY=-1";
 
-    public static void initialize() {
+    public void initialize() {
         try (Connection conn = DriverManager.getConnection(URL);
              Statement stmt = conn.createStatement()) {
 
@@ -30,7 +32,7 @@ public class H2SessionRepository {
         }
     }
 
-    public static void saveSession(Session session) {
+    public void saveSession(Session session) {
         String sql = "INSERT INTO sessions (session_id, hall_name, media_name, start_time, end_time) VALUES (?, ?, ?, ?, ?)";
         try (Connection conn = DriverManager.getConnection(URL);
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -47,7 +49,7 @@ public class H2SessionRepository {
         }
     }
 
-    public static Session getSession(String id) {
+    public Session getSession(String id) {
         String sql = "SELECT * FROM sessions WHERE session_id = ?";
         try (Connection conn = DriverManager.getConnection(URL);
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -76,7 +78,7 @@ public class H2SessionRepository {
         return null;
     }
 
-    public static List<Session> getSessionsByMediaName(String mediaName) {
+    public List<Session> getSessionsByMediaName(String mediaName) {
         List<Session> sessions = new ArrayList<>();
         // Seansları erken saatten geç saate sıralayarak getirme
         String sql = "SELECT * FROM sessions WHERE media_name = ? ORDER BY start_time ASC";
@@ -109,7 +111,7 @@ public class H2SessionRepository {
     }
 
 
-    public static void deleteSession(String film, String hall, String start) {
+    public void deleteSession(String film, String hall, String start) {
         String sql = "DELETE FROM sessions WHERE media_name = ? AND hall_name = ? AND start_time = ?";
 
         try (Connection conn = DriverManager.getConnection(URL);

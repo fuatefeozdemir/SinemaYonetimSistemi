@@ -1,7 +1,6 @@
 package cinema.model.content;
 
 import cinema.exception.InvalidInputException;
-import cinema.service.PricedContent;
 
 import java.time.LocalDate;
 

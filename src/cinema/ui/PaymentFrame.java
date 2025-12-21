@@ -8,6 +8,7 @@ import cinema.model.people.Cashier;
 import cinema.service.AuthService;
 import cinema.service.TicketService;
 import cinema.service.SessionService;
+import cinema.util.ServiceContainer;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -21,8 +22,7 @@ import java.util.ArrayList;
 
 public class PaymentFrame extends JFrame {
 
-    private final AuthService authService;
-    private final TicketService ticketService;
+    private final ServiceContainer serviceContainer;
 
     private final String targetCustomerEmail; // Kasiyer satışı yapıyorsa hedef müşterinin e-postası
 
@@ -42,13 +42,12 @@ public class PaymentFrame extends JFrame {
     private final Color COLOR_BORDER = new Color(35, 35, 35);
 
     public PaymentFrame(String movieTitle, ArrayList<String> selectedSeats, String selectedSession,
-                        AuthService authService, TicketService ticketService, String targetCustomerEmail) {
+                        String targetCustomerEmail, ServiceContainer serviceContainer) {
         this.movieTitle = movieTitle;
         this.selectedSeats = selectedSeats;
         this.selectedSession = selectedSession;
-        this.authService = authService;
-        this.ticketService = ticketService;
         this.targetCustomerEmail = targetCustomerEmail;
+        this.serviceContainer = serviceContainer;
 
         setUndecorated(true);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
@@ -127,11 +126,11 @@ public class PaymentFrame extends JFrame {
         addInfo(summaryCard, "SEANS", "Seçili Seans", 150);
         addInfo(summaryCard, "KOLTUKLAR", String.join(", ", selectedSeats), 220);
 
-        Session session = SessionService.getSession(selectedSession);
+        Session session = serviceContainer.getSessionService().getSession(selectedSession);
         double unitPrice = 100.0;
 
         if (session != null && session.getFilm() instanceof Film film) {
-            boolean isDiscounted = checkDiscountStatus(authService.getCurrentUser());
+            boolean isDiscounted = checkDiscountStatus(serviceContainer.getAuthService().getCurrentUser());
             unitPrice = film.calculatePrice(isDiscounted);
         }
 
@@ -203,11 +202,11 @@ public class PaymentFrame extends JFrame {
         }
 
         try {
-            User loggedInUser = authService.getCurrentUser();
+            User loggedInUser = serviceContainer.getAuthService().getCurrentUser();
             Customer buyer;
 
             if (loggedInUser instanceof Cashier) {
-                User target = authService.getUser(targetCustomerEmail);
+                User target = serviceContainer.getAuthService().getUser(targetCustomerEmail);
                 if (!(target instanceof Customer)) throw new Exception("Müşteri bulunamadı!");
                 buyer = (Customer) target;
             } else {
@@ -217,9 +216,9 @@ public class PaymentFrame extends JFrame {
             // Seçili koltuklar için bilet oluşturur
             for (String seatCode : selectedSeats) {
                 if (loggedInUser instanceof Cashier) {
-                    ticketService.buyTicket(selectedSession, buyer, seatCode, (Cashier) loggedInUser);
+                    serviceContainer.getTicketService().buyTicket(selectedSession, buyer, seatCode, (Cashier) loggedInUser);
                 } else {
-                    ticketService.buyTicket(selectedSession, buyer, seatCode);
+                    serviceContainer.getTicketService().buyTicket(selectedSession, buyer, seatCode);
                 }
             }
 
@@ -227,7 +226,7 @@ public class PaymentFrame extends JFrame {
             dispose();
 
             // Profil ekranına yönlendirir ve biletlerim sekmesini gösterir
-            ProfileFrame pf = new ProfileFrame(authService, ticketService);
+            ProfileFrame pf = new ProfileFrame(serviceContainer);
             pf.showTicketsTab();
             pf.setVisible(true);
 

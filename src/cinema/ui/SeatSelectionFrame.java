@@ -8,6 +8,7 @@ import cinema.model.people.User;
 import cinema.service.AuthService;
 import cinema.service.TicketService;
 import cinema.service.SessionService;
+import cinema.util.ServiceContainer;
 
 import javax.swing.*;
 import javax.swing.border.LineBorder;
@@ -22,8 +23,7 @@ import java.util.List;
 
 public class SeatSelectionFrame extends JFrame {
 
-    private final AuthService authService;
-    private final TicketService ticketService;
+    private final ServiceContainer serviceContainer;
 
     // UI Panelleri
     private JPanel contentPane;
@@ -59,22 +59,19 @@ public class SeatSelectionFrame extends JFrame {
     private final Color COLOR_SEAT_SELECTED = new Color(46, 204, 113);
 
     // Müşterinin kendisi için açtığı varsayılan constructor
-    public SeatSelectionFrame(String movieTitle, AuthService authService, TicketService ticketService) {
+    public SeatSelectionFrame(String movieTitle, ServiceContainer serviceContainer) {
         this.movieTitle = movieTitle;
-        this.authService = authService;
-        this.ticketService = ticketService;
-        this.targetEmail = authService.getCurrentUser().getEmail();
+        this.targetEmail = serviceContainer.getAuthService().getCurrentUser().getEmail();
+        this.serviceContainer = serviceContainer;
         setupUI();
     }
 
     // Kasiyerin işlem yaptığı durumlarda kullanılan constructor (Overlaoding)
-    public SeatSelectionFrame(String movieTitle, String selectedSessionTime, String targetEmail,
-                              AuthService authService, TicketService ticketService) {
+    public SeatSelectionFrame(String movieTitle, String selectedSessionTime, String targetEmail, ServiceContainer serviceContainer) {
         this.movieTitle = movieTitle;
         this.initialSessionTime = selectedSessionTime;
         this.targetEmail = targetEmail;
-        this.authService = authService;
-        this.ticketService = ticketService;
+        this.serviceContainer = serviceContainer;
         setupUI();
 
         if (initialSessionTime != null) {
@@ -159,7 +156,7 @@ public class SeatSelectionFrame extends JFrame {
 
     // Comboboxa seansları yükler
     private void loadSessions() {
-        List<Session> sessions = SessionService.getSessionsByMediaName(movieTitle);
+        List<Session> sessions = serviceContainer.getSessionService().getSessionsByMediaName(movieTitle);
         cmbSession.removeAllItems();
         for (Session s : sessions) {
             String label = s.getStartTime().format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm"))
@@ -185,7 +182,7 @@ public class SeatSelectionFrame extends JFrame {
         seatGrid.removeAll();
 
         String currentSessionId = findSessionId();
-        Session currentSession = SessionService.getSession(currentSessionId);
+        Session currentSession = serviceContainer.getSessionService().getSession(currentSessionId);
 
         if (currentSession != null) {
             Hall hall = currentSession.getHall();
@@ -198,7 +195,7 @@ public class SeatSelectionFrame extends JFrame {
             seatGrid.setBounds((1000 - totalWidth) / 2, 110, totalWidth, totalHeight);
             seatGrid.setLayout(new GridLayout(rows, cols, SEAT_GAP, SEAT_GAP));
 
-            occupiedSeats = ticketService.getOccupiedSeats(currentSessionId);
+            occupiedSeats = serviceContainer.getTicketService().getOccupiedSeats(currentSessionId);
 
             for (int r = 0; r < rows; r++) {
                 char rowLetter = (char) ('A' + r);
@@ -291,8 +288,7 @@ public class SeatSelectionFrame extends JFrame {
                 JOptionPane.showMessageDialog(this, "Lütfen en az bir koltuk seçin!");
                 return;
             }
-            new PaymentFrame(movieTitle, new ArrayList<>(selectedSeats), findSessionId(),
-                    authService, ticketService, targetEmail).setVisible(true);
+            new PaymentFrame(movieTitle, new ArrayList<>(selectedSeats), findSessionId(), targetEmail, serviceContainer).setVisible(true);
             dispose();
         });
         footer.add(btnConfirm);
@@ -307,11 +303,11 @@ public class SeatSelectionFrame extends JFrame {
             lblSummary.setForeground(COLOR_TEXT_SUB);
         } else {
             String sessionId = findSessionId();
-            Session session = SessionService.getSession(sessionId);
+            Session session = serviceContainer.getSessionService().getSession(sessionId);
             double total = selectedSeats.size() * 100.0;
 
             if (session != null && session.getFilm() instanceof Film film) {
-                boolean isDiscounted = checkDiscountStatus(authService.getCurrentUser());
+                boolean isDiscounted = checkDiscountStatus(serviceContainer.getAuthService().getCurrentUser());
                 total = selectedSeats.size() * film.calculatePrice(isDiscounted);
             }
             lblSummary.setText(selectedSeats.size() + " Koltuk | " + String.format("%.2f", total) + " TL");
@@ -329,7 +325,7 @@ public class SeatSelectionFrame extends JFrame {
 
     // Comboboxda seçili seansın idsini bulur
     private String findSessionId() {
-        List<Session> sessions = SessionService.getSessionsByMediaName(movieTitle);
+        List<Session> sessions = serviceContainer.getSessionService().getSessionsByMediaName(movieTitle);
         Object selected = cmbSession.getSelectedItem();
         if (selected == null) return "";
 
