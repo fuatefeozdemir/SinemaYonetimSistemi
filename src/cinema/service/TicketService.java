@@ -4,6 +4,7 @@ import cinema.H2.H2SessionRepository;
 import cinema.H2.H2TicketRepository;
 import cinema.model.Session;
 import cinema.model.Ticket;
+import cinema.model.content.Film; // Film sınıfı eklendi
 import cinema.model.people.Cashier;
 import cinema.model.people.Customer;
 import cinema.repository.TicketRepository;
@@ -27,17 +28,12 @@ public class TicketService {
     }
 
     // --- KASİYER (GİŞE) SATIŞI ---
-    // Bu metot bilet oluşturuyor ama kaydetmiyordu, düzeltildi.
     public void buyTicket(String sessionId, Customer customer, String seatCode, Cashier cashier) {
         Ticket ticket = processTicket(sessionId, customer, seatCode);
-
-        // KRİTİK DÜZELTME: Veritabanına kaydetme komutu eklendi
         ticketRepository.saveTicket(ticket);
 
         if (cashier != null) {
             cashier.setDailyCount(cashier.getDailyCount() + 1);
-            // İsteğe bağlı: Kasiyer bilgisini de güncelleyebilirsin (DailyCount için)
-            // authService.updateUser(cashier);
         }
     }
 
@@ -49,11 +45,15 @@ public class TicketService {
         }
 
         boolean isDiscounted = calculateDiscountStatus(customer);
-        double finalPrice = 150.0; // Varsayılan fiyat
+        double finalPrice = 100.0; // Varsayılan/Hata durumunda kullanılacak fiyat
 
-        // Fiyatlandırma mantığı
-        if (session.getFilm() instanceof PricedContent pricedFilm) {
-            finalPrice = pricedFilm.calculatePrice(isDiscounted);
+        // HATA BURADAYDI: Media nesnesini Film'e cast etmeliyiz
+        if (session.getFilm() instanceof Film film) {
+            // Eğer nesne bir Film ise (Standard2D, Premium3D veya Animation)
+            finalPrice = film.calculatePrice(isDiscounted);
+        } else {
+            // Eğer ileride Film olmayan başka bir Media türü eklersen burası çalışır
+            System.out.println("Uyarı: Bu içerik bir Film türünde değil, standart fiyat uygulandı.");
         }
 
         // Yeni bilet nesnesi oluşturma
@@ -68,6 +68,7 @@ public class TicketService {
     private boolean calculateDiscountStatus(Customer customer) {
         if (customer.getDateOfBirth() == null) return false;
         long age = ChronoUnit.YEARS.between(customer.getDateOfBirth(), LocalDate.now());
+        // Yaşı 18'den küçükse indirim hakkı kazanır
         return age < 18;
     }
 

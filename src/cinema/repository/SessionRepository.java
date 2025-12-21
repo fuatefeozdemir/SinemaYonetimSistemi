@@ -1,6 +1,6 @@
 package cinema.repository;
 
-// Çalışmıyor olabilir
+// yapılacak
 
 public interface SessionRepository {
 }

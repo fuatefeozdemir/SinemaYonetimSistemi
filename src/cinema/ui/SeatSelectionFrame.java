@@ -1,6 +1,9 @@
 package cinema.ui;
 
 import cinema.model.Session;
+import cinema.model.content.Film;
+import cinema.model.people.Customer;
+import cinema.model.people.User;
 import cinema.service.AuthService;
 import cinema.service.TicketService;
 import cinema.service.SessionService;
@@ -11,7 +14,9 @@ import javax.swing.border.LineBorder;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.RoundRectangle2D;
+import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -40,9 +45,7 @@ public class SeatSelectionFrame extends JFrame {
 
     private final Color COLOR_SEAT_EMPTY = new Color(40, 40, 40);
     private final Color COLOR_SEAT_FULL = new Color(120, 30, 30);
-    private final Color COLOR_SEAT_SELECTED = new Color(46, 204, 113); // Yeşil seçim
-
-    private final double TICKET_PRICE = 150.0;
+    private final Color COLOR_SEAT_SELECTED = new Color(46, 204, 113);
 
     public SeatSelectionFrame(String movieTitle, AuthService authService, TicketService ticketService) {
         this.movieTitle = movieTitle;
@@ -93,7 +96,6 @@ public class SeatSelectionFrame extends JFrame {
         title.setBounds(40, 20, 600, 40);
         header.add(title);
 
-        // Kontroller
         JButton btnMin = new JButton("_");
         btnMin.setBounds(900, 15, 40, 35);
         btnMin.setFont(new Font("Segoe UI Black", Font.BOLD, 22));
@@ -123,22 +125,17 @@ public class SeatSelectionFrame extends JFrame {
         centerPanel.setBackground(COLOR_BG);
         contentPane.add(centerPanel, BorderLayout.CENTER);
 
-        // Modern Işıklı Perde
         JPanel screenPanel = new JPanel() {
             @Override
             protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-
-                // Perde Işığı (Gradient)
                 GradientPaint gp = new GradientPaint(0, 0, new Color(229, 9, 20, 40), 0, 50, new Color(10, 10, 10, 0));
                 g2.setPaint(gp);
                 g2.fillArc(50, 0, 700, 100, 0, 180);
-
                 g2.setColor(new Color(60, 60, 60));
                 g2.setStroke(new BasicStroke(4, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
                 g2.drawArc(50, 10, 700, 60, 0, 180);
-
                 g2.setFont(new Font("Segoe UI Bold", Font.PLAIN, 12));
                 g2.setColor(COLOR_TEXT_SUB);
                 g2.drawString("PERDE / SCREEN", 355, 60);
@@ -149,7 +146,6 @@ public class SeatSelectionFrame extends JFrame {
         screenPanel.setOpaque(false);
         centerPanel.add(screenPanel);
 
-        // Koltuk Izgarası
         seatGrid = new JPanel(new GridLayout(6, 10, 12, 12));
         seatGrid.setBackground(COLOR_BG);
         seatGrid.setBounds(125, 120, 750, 380);
@@ -157,7 +153,6 @@ public class SeatSelectionFrame extends JFrame {
     }
 
     private void loadSessions() {
-        // TicketService içindeki metodun adını projenle uyumlu hale getirmelisin (Örn: getSessionsByMediaName)
         List<Session> sessions = SessionService.getSessionsByMediaName(movieTitle);
         cmbSession.removeAllItems();
         for (Session s : sessions) {
@@ -192,13 +187,10 @@ public class SeatSelectionFrame extends JFrame {
             protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-
                 if (isSold) g2.setColor(COLOR_SEAT_FULL);
                 else if (isSelected()) g2.setColor(COLOR_SEAT_SELECTED);
                 else g2.setColor(COLOR_SEAT_EMPTY);
-
                 g2.fillRoundRect(0, 0, getWidth(), getHeight(), 12, 12);
-
                 g2.setColor(isSold ? new Color(255,255,255,50) : Color.WHITE);
                 g2.setFont(new Font("Segoe UI Bold", Font.PLAIN, 11));
                 FontMetrics fm = g2.getFontMetrics();
@@ -209,7 +201,6 @@ public class SeatSelectionFrame extends JFrame {
         btn.setContentAreaFilled(false);
         btn.setBorderPainted(false);
         btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
-
         if (isSold) {
             btn.setEnabled(false);
         } else {
@@ -228,7 +219,6 @@ public class SeatSelectionFrame extends JFrame {
         footer.setPreferredSize(new Dimension(1000, 180));
         footer.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, COLOR_BORDER));
 
-        // Legend
         JPanel legend = new JPanel(new FlowLayout(FlowLayout.CENTER, 40, 15));
         legend.setOpaque(false);
         legend.setBounds(0, 5, 1000, 45);
@@ -237,7 +227,6 @@ public class SeatSelectionFrame extends JFrame {
         legend.add(new LegendItem(COLOR_SEAT_SELECTED, "SEÇİLİ"));
         footer.add(legend);
 
-        // Seans Seçimi
         JLabel lblSes = new JLabel("SEANS SEÇİN:");
         lblSes.setForeground(COLOR_ACCENT);
         lblSes.setFont(new Font("Segoe UI Bold", Font.PLAIN, 11));
@@ -252,14 +241,12 @@ public class SeatSelectionFrame extends JFrame {
         cmbSession.addActionListener(e -> refreshSeats());
         footer.add(cmbSession);
 
-        // Özet
         lblSummary = new JLabel("Koltuk seçimi bekleniyor...");
         lblSummary.setForeground(COLOR_TEXT_MAIN);
-        lblSummary.setFont(new Font("Segoe UI Bold", Font.PLAIN, 16));
-        lblSummary.setBounds(400, 85, 300, 40);
+        lblSummary.setFont(new Font("Segoe UI Black", Font.PLAIN, 16));
+        lblSummary.setBounds(400, 85, 450, 40);
         footer.add(lblSummary);
 
-        // Buton
         JButton btnConfirm = new JButton("ÖDEMEYE GEÇ →");
         btnConfirm.setBounds(750, 80, 200, 50);
         btnConfirm.setBackground(COLOR_ACCENT);
@@ -282,14 +269,37 @@ public class SeatSelectionFrame extends JFrame {
         contentPane.add(footer, BorderLayout.SOUTH);
     }
 
+    // --- DİNAMİK FİYAT HESAPLAMA MANTIĞI ---
     private void updateSummary() {
         if (selectedSeats.isEmpty()) {
             lblSummary.setText("Koltuk seçimi bekleniyor...");
             lblSummary.setForeground(COLOR_TEXT_SUB);
         } else {
-            lblSummary.setText(selectedSeats.size() + " Bilet | " + (selectedSeats.size() * TICKET_PRICE) + " TL");
+            String sessionId = findSessionId();
+            Session session = SessionService.getSession(sessionId);
+
+            double unitPrice = 100.0; // Fallback fiyat
+
+            if (session != null && session.getFilm() instanceof Film film) {
+                // Kullanıcı indirim durumunu hesapla (Müşteri < 18 ise %10 indirim)
+                boolean isDiscounted = checkDiscountStatus(authService.getCurrentUser());
+                unitPrice = film.calculatePrice(isDiscounted);
+            }
+
+            double total = selectedSeats.size() * unitPrice;
+            lblSummary.setText(selectedSeats.size() + " Bilet | Toplam: " + String.format("%.2f", total) + " TL");
             lblSummary.setForeground(Color.WHITE);
         }
+    }
+
+    // Yaş kontrolü için yardımcı metot
+    private boolean checkDiscountStatus(User user) {
+        if (user instanceof Customer customer) {
+            if (customer.getDateOfBirth() == null) return false;
+            long age = ChronoUnit.YEARS.between(customer.getDateOfBirth(), LocalDate.now());
+            return age < 18;
+        }
+        return false;
     }
 
     private String findSessionId() {

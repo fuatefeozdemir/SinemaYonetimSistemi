@@ -1,16 +1,22 @@
 package cinema.ui;
 
+import cinema.model.Session;
+import cinema.model.content.Film;
 import cinema.model.people.User;
 import cinema.model.people.Customer;
 import cinema.model.people.Cashier;
 import cinema.service.AuthService;
 import cinema.service.TicketService;
+import cinema.service.SessionService;
+
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.RoundRectangle2D;
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 
 public class PaymentFrame extends JFrame {
@@ -25,9 +31,8 @@ public class PaymentFrame extends JFrame {
     private String movieTitle;
     private ArrayList<String> selectedSeats;
     private final String selectedSession;
-    private final double TICKET_PRICE = 150.0;
 
-    // Premium Renk Paleti (Diğer ekranlarla tam uyumlu)
+    // Premium Renk Paleti
     private final Color COLOR_BG = new Color(10, 10, 10);
     private final Color COLOR_CARD = new Color(22, 22, 22);
     private final Color COLOR_ACCENT = new Color(229, 9, 20);
@@ -39,7 +44,7 @@ public class PaymentFrame extends JFrame {
                         AuthService authService, TicketService ticketService, String targetCustomerEmail) {
         this.movieTitle = movieTitle;
         this.selectedSeats = selectedSeats;
-        this.selectedSession = selectedSession;
+        this.selectedSession = selectedSession; // Bu aslında sessionId
         this.authService = authService;
         this.ticketService = ticketService;
         this.targetCustomerEmail = targetCustomerEmail;
@@ -72,7 +77,6 @@ public class PaymentFrame extends JFrame {
         logo.setBounds(30, 15, 150, 30);
         header.add(logo);
 
-        // Pencere Kontrolleri
         JButton btnMin = new JButton("_");
         btnMin.setBounds(750, 15, 40, 35);
         btnMin.setFont(new Font("Segoe UI Black", Font.BOLD, 22));
@@ -117,10 +121,20 @@ public class PaymentFrame extends JFrame {
         summaryCard.add(title);
 
         addInfo(summaryCard, "FİLM", movieTitle.toUpperCase(), 80);
-        addInfo(summaryCard, "SEANS", selectedSession, 150);
+        addInfo(summaryCard, "SEANS", "Seçili Seans", 150); // Zaman formatı için Session objesi kullanılabilir
         addInfo(summaryCard, "KOLTUKLAR", String.join(", ", selectedSeats), 220);
 
-        double total = selectedSeats.size() * TICKET_PRICE;
+        // --- DİNAMİK TUTAR HESAPLAMA ---
+        Session session = SessionService.getSession(selectedSession);
+        double unitPrice = 100.0; // Varsayılan
+
+        if (session != null && session.getFilm() instanceof Film film) {
+            boolean isDiscounted = checkDiscountStatus(authService.getCurrentUser());
+            unitPrice = film.calculatePrice(isDiscounted);
+        }
+
+        double total = selectedSeats.size() * unitPrice;
+
         JLabel lblTotalT = new JLabel("TOPLAM TUTAR");
         lblTotalT.setForeground(COLOR_TEXT_SUB);
         lblTotalT.setFont(new Font("Segoe UI Bold", Font.PLAIN, 12));
@@ -132,6 +146,15 @@ public class PaymentFrame extends JFrame {
         lblPrice.setFont(new Font("Segoe UI Black", Font.BOLD, 32));
         lblPrice.setBounds(30, 355, 260, 45);
         summaryCard.add(lblPrice);
+    }
+
+    private boolean checkDiscountStatus(User user) {
+        if (user instanceof Customer customer) {
+            if (customer.getDateOfBirth() == null) return false;
+            long age = ChronoUnit.YEARS.between(customer.getDateOfBirth(), LocalDate.now());
+            return age < 18;
+        }
+        return false;
     }
 
     private void initPaymentForm() {
@@ -186,7 +209,6 @@ public class PaymentFrame extends JFrame {
                 buyer = (Customer) loggedInUser;
             }
 
-            // Bilet Kayıt
             for (String seatCode : selectedSeats) {
                 if (loggedInUser instanceof Cashier) {
                     ticketService.buyTicket(selectedSession, buyer, seatCode, (Cashier) loggedInUser);
@@ -197,10 +219,9 @@ public class PaymentFrame extends JFrame {
 
             JOptionPane.showMessageDialog(this, "Ödeme onaylandı! Biletleriniz profilinize eklendi.", "Başarılı", JOptionPane.INFORMATION_MESSAGE);
 
-            // Direkt Profil ekranına yönlendir
             dispose();
             ProfileFrame pf = new ProfileFrame(authService, ticketService);
-            pf.showTicketsTab(); // Biletler sekmesini açan metodun ProfileFrame'de olması gerekir
+            pf.showTicketsTab();
             pf.setVisible(true);
 
         } catch (Exception ex) {
