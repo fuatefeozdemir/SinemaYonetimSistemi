@@ -8,7 +8,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.UUID;
 
 public class Ticket {
-    private final String ticketId;
+    private String ticketId;
     private final LocalDateTime purchaseTime;
     private final double finalPrice;
     private final String session;
@@ -23,6 +23,10 @@ public class Ticket {
         this.session = session;
         this.customer = customer;
         this.seatCode = seatCode;
+    }
+
+    public void setTicketId(String ticketId) {
+        this.ticketId = ticketId;
     }
 
     public String getTicketId() {

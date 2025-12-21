@@ -65,5 +65,12 @@ public class AuthService {
     }
     public void deleteUser() {
         userRepository.deleteUser(getCurrentUser().getEmail());
+
+    }
+    public User getUser(String email) {
+        if (email == null || email.trim().isEmpty()) {
+            return null;
+        }
+        return userRepository.getUser(email);
     }
 }

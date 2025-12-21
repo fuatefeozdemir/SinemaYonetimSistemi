@@ -6,9 +6,10 @@ import cinema.service.TicketService;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
-import javax.swing.border.MatteBorder;
+import javax.swing.border.LineBorder;
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.geom.RoundRectangle2D;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
 import java.util.UUID;
@@ -22,24 +23,28 @@ public class RegisterFrame extends JFrame {
     private JPasswordField txtPassword;
     private int mouseX, mouseY;
 
-    // LoginFrame ile birebir aynı Renk Paleti
-    private final Color COLOR_BG = new Color(33, 33, 33);
-    private final Color COLOR_ACCENT = new Color(229, 9, 20); // Netflix Kırmızısı
-    private final Color COLOR_TEXT = new Color(240, 240, 240);
-    private final Color COLOR_INPUT_BORDER = Color.GRAY;
+    // Premium Renk Paleti
+    private final Color COLOR_BG = new Color(10, 10, 10);
+    private final Color COLOR_CARD = new Color(22, 22, 22);
+    private final Color COLOR_ACCENT = new Color(229, 9, 20);
+    private final Color COLOR_TEXT_MAIN = new Color(245, 245, 245);
+    private final Color COLOR_TEXT_SUB = new Color(150, 150, 150);
+    private final Color COLOR_BORDER = new Color(35, 35, 35);
 
     public RegisterFrame(AuthService authService, TicketService ticketService) {
         this.authService = authService;
         this.ticketService = ticketService;
 
-        setUndecorated(true); // Üst barı kaldırır
+        setUndecorated(true);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setBounds(100, 100, 450, 650);
+        setSize(480, 720); // Boyut biraz optimize edildi
         setLocationRelativeTo(null);
+        // Oval Köşeler
+        setShape(new RoundRectangle2D.Double(0, 0, 480, 720, 30, 30));
 
         contentPane = new JPanel();
         contentPane.setBackground(COLOR_BG);
-        contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
+        contentPane.setBorder(new LineBorder(COLOR_BORDER, 1));
         setContentPane(contentPane);
         contentPane.setLayout(null);
 
@@ -49,13 +54,11 @@ public class RegisterFrame extends JFrame {
     }
 
     private void initHeader() {
-        JPanel headerPanel = new JPanel();
+        JPanel headerPanel = new JPanel(null);
         headerPanel.setBackground(COLOR_BG);
-        headerPanel.setBounds(0, 0, 450, 40);
+        headerPanel.setBounds(0, 0, 480, 50);
         contentPane.add(headerPanel);
-        headerPanel.setLayout(null);
 
-        // Pencere Sürükleme
         headerPanel.addMouseListener(new MouseAdapter() {
             public void mousePressed(MouseEvent e) { mouseX = e.getX(); mouseY = e.getY(); }
         });
@@ -63,101 +66,132 @@ public class RegisterFrame extends JFrame {
             public void mouseDragged(MouseEvent e) { setLocation(getX() + e.getX() - mouseX, getY() + e.getY() - mouseY); }
         });
 
+        // Minimize Butonu
+        JButton btnMin = new JButton("_");
+        btnMin.setBounds(390, 10, 35, 35);
+        btnMin.setFont(new Font("Segoe UI Black", Font.BOLD, 22));
+        styleControlBtn(btnMin, Color.WHITE);
+        btnMin.addActionListener(e -> setState(JFrame.ICONIFIED));
+        headerPanel.add(btnMin);
+
         // Kapatma Butonu
-        JLabel lblClose = new JLabel("X");
-        lblClose.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        lblClose.setForeground(Color.WHITE);
-        lblClose.setFont(new Font("Segoe UI", Font.BOLD, 18));
-        lblClose.setBounds(415, 0, 35, 40);
-        lblClose.setHorizontalAlignment(SwingConstants.CENTER);
-        lblClose.addMouseListener(new MouseAdapter() {
-            public void mouseClicked(MouseEvent e) { System.exit(0); }
-            public void mouseEntered(MouseEvent e) { lblClose.setForeground(COLOR_ACCENT); }
-            public void mouseExited(MouseEvent e) { lblClose.setForeground(Color.WHITE); }
-        });
-        headerPanel.add(lblClose);
+        JButton btnClose = new JButton("X");
+        btnClose.setBounds(430, 10, 35, 35);
+        btnClose.setFont(new Font("Segoe UI Black", Font.BOLD, 18));
+        styleControlBtn(btnClose, COLOR_ACCENT);
+        btnClose.addActionListener(e -> System.exit(0));
+        headerPanel.add(btnClose);
     }
 
     private void initTitle() {
-        JLabel lblTitle = new JLabel("HESAP OLUŞTUR");
+        JLabel lblLogo = new JLabel("SİNEMA");
+        lblLogo.setHorizontalAlignment(SwingConstants.CENTER);
+        lblLogo.setForeground(COLOR_ACCENT);
+        lblLogo.setFont(new Font("Segoe UI Black", Font.BOLD, 32));
+        lblLogo.setBounds(0, 60, 480, 40);
+        contentPane.add(lblLogo);
+
+        JLabel lblTitle = new JLabel("YENİ HESAP OLUŞTUR");
         lblTitle.setHorizontalAlignment(SwingConstants.CENTER);
-        lblTitle.setForeground(COLOR_ACCENT);
-        lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 26));
-        lblTitle.setBounds(0, 50, 450, 40);
+        lblTitle.setForeground(COLOR_TEXT_MAIN);
+        lblTitle.setFont(new Font("Segoe UI Semibold", Font.PLAIN, 14));
+        lblTitle.setBounds(0, 100, 480, 20);
         contentPane.add(lblTitle);
     }
 
     private void initForm() {
-        int startY = 110;
-        int spacing = 70;
+        int startY = 150;
+        int spacing = 75;
+        int fieldX = 75;
+        int fieldW = 330;
 
-        txtFirstName = addLabeledField("Ad", startY);
-        txtLastName = addLabeledField("Soyad", startY + spacing);
-        txtEmail = addLabeledField("E-posta", startY + (spacing * 2));
-        txtBirthDate = addLabeledField("Doğum Tarihi (YYYY-MM-DD)", startY + (spacing * 3));
+        txtFirstName = addLabeledField("AD", startY, fieldX, fieldW);
+        txtLastName = addLabeledField("SOYAD", startY + spacing, fieldX, fieldW);
+        txtEmail = addLabeledField("E-POSTA ADRESİ", startY + (spacing * 2), fieldX, fieldW);
+        txtBirthDate = addLabeledField("DOĞUM TARİHİ (YYYY-MM-DD)", startY + (spacing * 3), fieldX, fieldW);
 
         // Şifre Alanı
-        JLabel lblPass = new JLabel("Şifre");
-        lblPass.setForeground(COLOR_TEXT);
-        lblPass.setBounds(75, startY + (spacing * 4), 300, 20);
+        JLabel lblPass = new JLabel("ŞİFRE");
+        lblPass.setForeground(COLOR_ACCENT);
+        lblPass.setFont(new Font("Segoe UI Bold", Font.PLAIN, 11));
+        lblPass.setBounds(fieldX, startY + (spacing * 4), fieldW, 20);
         contentPane.add(lblPass);
 
         txtPassword = new JPasswordField();
-        styleTextField(txtPassword);
-        txtPassword.setBounds(75, startY + (spacing * 4) + 25, 300, 35);
+        styleInput(txtPassword);
+        txtPassword.setBounds(fieldX, startY + (spacing * 4) + 22, fieldW, 40);
         contentPane.add(txtPassword);
 
         // Kayıt Butonu
         JButton btnRegister = new JButton("KAYIT OL");
-        btnRegister.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        btnRegister.setBounds(75, 520, 300, 45);
+        btnRegister.setBounds(fieldX, 580, fieldW, 48);
         btnRegister.setBackground(COLOR_ACCENT);
         btnRegister.setForeground(Color.WHITE);
-        btnRegister.setFont(new Font("Segoe UI", Font.BOLD, 15));
+        btnRegister.setFont(new Font("Segoe UI Bold", Font.PLAIN, 15));
         btnRegister.setFocusPainted(false);
         btnRegister.setBorderPainted(false);
+        btnRegister.setCursor(new Cursor(Cursor.HAND_CURSOR));
         btnRegister.addActionListener(this::handleRegister);
         contentPane.add(btnRegister);
 
         // Geri Dön Linki
         JLabel lblLogin = new JLabel("Zaten bir hesabın var mı? Giriş Yap");
-        lblLogin.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        lblLogin.setCursor(new Cursor(Cursor.HAND_CURSOR));
         lblLogin.setHorizontalAlignment(SwingConstants.CENTER);
-        lblLogin.setForeground(Color.GRAY);
-        lblLogin.setBounds(0, 580, 450, 30);
+        lblLogin.setForeground(COLOR_TEXT_SUB);
+        lblLogin.setFont(new Font("Segoe UI Semibold", Font.PLAIN, 13));
+        lblLogin.setBounds(0, 640, 480, 30);
         lblLogin.addMouseListener(new MouseAdapter() {
             public void mouseClicked(MouseEvent e) {
                 new LoginFrame(authService, ticketService).setVisible(true);
                 dispose();
             }
             public void mouseEntered(MouseEvent e) { lblLogin.setForeground(COLOR_ACCENT); }
-            public void mouseExited(MouseEvent e) { lblLogin.setForeground(Color.GRAY); }
+            public void mouseExited(MouseEvent e) { lblLogin.setForeground(COLOR_TEXT_SUB); }
         });
         contentPane.add(lblLogin);
     }
 
-    private JTextField addLabeledField(String labelText, int yPos) {
+    private JTextField addLabeledField(String labelText, int yPos, int x, int w) {
         JLabel lbl = new JLabel(labelText);
-        lbl.setForeground(COLOR_TEXT);
-        lbl.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        lbl.setBounds(75, yPos, 300, 20);
+        lbl.setForeground(COLOR_ACCENT);
+        lbl.setFont(new Font("Segoe UI Bold", Font.PLAIN, 11));
+        lbl.setBounds(x, yPos, w, 20);
         contentPane.add(lbl);
 
         JTextField field = new JTextField();
-        styleTextField(field);
-        field.setBounds(75, yPos + 25, 300, 35);
+        styleInput(field);
+        field.setBounds(x, yPos + 22, w, 40);
         contentPane.add(field);
         return field;
     }
 
-    private void styleTextField(JTextField field) {
-        field.setBackground(COLOR_BG);
+    private void styleInput(JTextField field) {
+        field.setBackground(COLOR_CARD);
         field.setForeground(Color.WHITE);
         field.setCaretColor(COLOR_ACCENT);
-        field.setBorder(new MatteBorder(0, 0, 2, 0, COLOR_INPUT_BORDER));
+        field.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        field.setBorder(BorderFactory.createCompoundBorder(
+                new LineBorder(COLOR_BORDER, 1, true),
+                new EmptyBorder(0, 10, 0, 10)
+        ));
+
         field.addFocusListener(new FocusAdapter() {
-            public void focusGained(FocusEvent e) { field.setBorder(new MatteBorder(0, 0, 2, 0, COLOR_ACCENT)); }
-            public void focusLost(FocusEvent e) { field.setBorder(new MatteBorder(0, 0, 2, 0, COLOR_INPUT_BORDER)); }
+            public void focusGained(FocusEvent e) { field.setBorder(new LineBorder(COLOR_ACCENT, 1, true)); }
+            public void focusLost(FocusEvent e) { field.setBorder(new LineBorder(COLOR_BORDER, 1, true)); }
+        });
+    }
+
+    private void styleControlBtn(JButton btn, Color hover) {
+        btn.setContentAreaFilled(false);
+        btn.setBorderPainted(false);
+        btn.setFocusPainted(false);
+        btn.setMargin(new Insets(0, 0, 0, 0));
+        btn.setForeground(new Color(100, 100, 100));
+        btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        btn.addMouseListener(new MouseAdapter() {
+            public void mouseEntered(MouseEvent e) { btn.setForeground(hover); }
+            public void mouseExited(MouseEvent e) { btn.setForeground(new Color(100, 100, 100)); }
         });
     }
 
@@ -169,27 +203,23 @@ public class RegisterFrame extends JFrame {
             String password = new String(txtPassword.getPassword());
             String birthDateStr = txtBirthDate.getText();
 
-            // 1. Temel Validation
             if (firstName.isBlank() || email.isBlank() || password.isBlank() || birthDateStr.isBlank()) {
-                JOptionPane.showMessageDialog(this, "Lütfen tüm alanları doldurun.", "Hata", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Lütfen tüm alanları doldurun.", "Uyarı", JOptionPane.WARNING_MESSAGE);
                 return;
             }
 
-            // 2. Nesne Hazırlama
             Customer newCustomer = new Customer(firstName, lastName, email, LocalDate.parse(birthDateStr), password);
             newCustomer.setId(UUID.randomUUID().toString());
-
-            // 3. Service Üzerinden Kayıt (UI -> AuthService -> UserRepository)
             authService.register(newCustomer);
 
-            JOptionPane.showMessageDialog(this, "Kaydınız başarıyla tamamlandı!", "Bilgi", JOptionPane.INFORMATION_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Kaydınız başarıyla tamamlandı!", "Başarılı", JOptionPane.INFORMATION_MESSAGE);
             new LoginFrame(authService, ticketService).setVisible(true);
             this.dispose();
 
         } catch (DateTimeParseException ex) {
-            JOptionPane.showMessageDialog(this, "Tarih formatı YYYY-MM-DD olmalıdır!", "Format Hatası", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Tarih formatı YYYY-MM-DD olmalıdır!", "Hata", JOptionPane.ERROR_MESSAGE);
         } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, ex.getMessage(), "Kayıt Hatası", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, ex.getMessage(), "Hata", JOptionPane.ERROR_MESSAGE);
         }
     }
 }

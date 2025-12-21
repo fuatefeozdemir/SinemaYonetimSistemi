@@ -26,7 +26,6 @@ public class H2TicketRepository implements TicketRepository {
                     "seat_code VARCHAR(10), " +
                     "final_price DOUBLE, " +
                     "purchase_time TIMESTAMP, " +
-                    "is_refunded BOOLEAN DEFAULT FALSE, " +
                     "FOREIGN KEY (session_id) REFERENCES sessions(session_id), " +
                     "FOREIGN KEY (customer_email) REFERENCES users(email))");
         } catch (SQLException e) {
@@ -130,5 +129,45 @@ public class H2TicketRepository implements TicketRepository {
 
         return occupied;
     }
-    // Diğer metotlar (updateRefundStatus, getTicketsByCustomer) öncekiyle aynı kalabilir.
+
+    public static List<Ticket> getTicketsByCustomerEmail(String email) {
+        List<Ticket> tickets = new ArrayList<>();
+        String sql = "SELECT * FROM tickets WHERE customer_email = ? ORDER BY purchase_time DESC";
+
+        try (Connection conn = DriverManager.getConnection(URL);
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setString(1, email);
+            ResultSet rs = pstmt.executeQuery();
+
+            while (rs.next()) {
+                Ticket ticket = new Ticket(
+                        rs.getString("session_id"),
+                        rs.getString("customer_email"),
+                        rs.getString("seat_code"),
+                        rs.getDouble("final_price")
+                );
+
+                // KRİTİK DOKUNUŞ: Veritabanındaki gerçek ID'yi Java nesnesine zorla yazıyoruz
+                ticket.setTicketId(rs.getString("ticket_id"));
+
+                tickets.add(ticket);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return tickets;
+    }
+
+    public static boolean deleteTicket(String ticketId) {
+        String sql = "DELETE FROM tickets WHERE ticket_id = ?";
+        try (Connection conn = DriverManager.getConnection(URL);
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, ticketId);
+            return pstmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
 }

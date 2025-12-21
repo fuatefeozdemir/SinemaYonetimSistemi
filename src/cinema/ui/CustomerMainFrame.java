@@ -2,271 +2,314 @@ package cinema.ui;
 
 import cinema.model.content.Media;
 import cinema.model.content.Film;
-import cinema.H2.MediaRepository;
+import cinema.model.Session;
 import cinema.service.AuthService;
+import cinema.service.MediaService;
+import cinema.service.SessionService;
 import cinema.service.TicketService;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
-import javax.swing.plaf.basic.BasicScrollBarUI;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import java.awt.*;
 import java.awt.event.*;
-import java.net.URL;
+import java.awt.geom.RoundRectangle2D;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class CustomerMainFrame extends JFrame {
 
     private final AuthService authService;
     private final TicketService ticketService;
-    private final MediaRepository mediaRepository;
+    private final MediaService mediaService;
+
     private JPanel contentPane;
     private JPanel moviesPanel;
+    private JScrollPane scrollPane;
     private int mouseX, mouseY;
 
-    // Renk Paleti
-    private final Color COLOR_BG = new Color(33, 33, 33);
-    private final Color COLOR_CARD_BG = new Color(45, 45, 45);
+    private List<Media> allMovies = new ArrayList<>();
+    private Timer scrollTimer;
+    private int targetScrollValue = 0;
+
+    private final Color COLOR_BG = new Color(10, 10, 10);
+    private final Color COLOR_CARD_BG = new Color(22, 22, 22);
     private final Color COLOR_ACCENT = new Color(229, 9, 20);
-    private final Color COLOR_TEXT = new Color(240, 240, 240);
-    private final Color COLOR_BORDER = new Color(60, 60, 60);
+    private final Color COLOR_TEXT_MAIN = new Color(245, 245, 245);
+    private final Color COLOR_TEXT_SUB = new Color(150, 150, 150);
 
     public CustomerMainFrame(AuthService authService, TicketService ticketService) {
         this.authService = authService;
         this.ticketService = ticketService;
-        this.mediaRepository = new MediaRepository();
+        this.mediaService = new MediaService();
 
         setUndecorated(true);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setBounds(100, 100, 1020, 720);
+        setSize(1280, 820);
         setLocationRelativeTo(null);
+        setShape(new RoundRectangle2D.Double(0, 0, 1280, 820, 30, 30));
 
-        contentPane = new JPanel();
+        contentPane = new JPanel(new BorderLayout());
         contentPane.setBackground(COLOR_BG);
         setContentPane(contentPane);
-        contentPane.setLayout(new BorderLayout(0, 0));
 
         initHeader();
-        initMovieGrid();
+        initCarousel();
         loadMoviesFromDatabase();
     }
 
     private void initHeader() {
-        JPanel headerPanel = new JPanel();
-        headerPanel.setBackground(COLOR_BG);
-        headerPanel.setPreferredSize(new Dimension(1000, 60));
-        headerPanel.setLayout(null);
-        headerPanel.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, COLOR_BORDER));
-        contentPane.add(headerPanel, BorderLayout.NORTH);
+        JPanel header = new JPanel(null);
+        header.setPreferredSize(new Dimension(1280, 100));
+        header.setBackground(COLOR_BG);
 
-        // Pencere Sürükleme Mantığı
-        headerPanel.addMouseListener(new MouseAdapter() {
+        header.addMouseListener(new MouseAdapter() {
             public void mousePressed(MouseEvent e) { mouseX = e.getX(); mouseY = e.getY(); }
         });
-        headerPanel.addMouseMotionListener(new MouseMotionAdapter() {
+        header.addMouseMotionListener(new MouseMotionAdapter() {
             public void mouseDragged(MouseEvent e) { setLocation(getX() + e.getX() - mouseX, getY() + e.getY() - mouseY); }
         });
 
-        JLabel lblTitle = new JLabel("SİNEMA DÜNYASI");
+        // 1. Logo
+        JLabel lblTitle = new JLabel("SİNEMA");
+        lblTitle.setFont(new Font("Segoe UI Black", Font.BOLD, 32));
         lblTitle.setForeground(COLOR_ACCENT);
-        lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 22));
-        lblTitle.setBounds(20, 15, 250, 30);
-        headerPanel.add(lblTitle);
+        lblTitle.setBounds(40, 30, 200, 40);
+        header.add(lblTitle);
 
-        // Kullanıcı Karşılama Metni
-        String userName = (authService.getCurrentUser() != null) ? authService.getCurrentUser().getFirstName() : "Misafir";
-        JLabel lblUser = new JLabel("Hoşgeldin, " + userName);
-        lblUser.setForeground(Color.GRAY);
-        lblUser.setHorizontalAlignment(SwingConstants.RIGHT);
-        lblUser.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        lblUser.setBounds(520, 15, 150, 30); // Profil butonu için yer açmak adına X koordinatını sola kaydırdık
-        headerPanel.add(lblUser);
+        // 2. Arama Çubuğu
+        JTextField txtSearch = new JTextField("Film ara...");
+        txtSearch.setBounds(260, 32, 350, 36);
+        txtSearch.setBackground(new Color(25, 25, 25));
+        txtSearch.setForeground(COLOR_TEXT_SUB);
+        txtSearch.setCaretColor(COLOR_ACCENT);
+        txtSearch.setBorder(new LineBorder(new Color(50, 50, 50), 1, true));
 
-        // --- PROFİLİM BUTONU ---
-        JButton btnProfile = new JButton("PROFİLİM");
-        btnProfile.setBounds(690, 15, 120, 30);
-        btnProfile.setBackground(new Color(60, 60, 60));
-        btnProfile.setForeground(Color.WHITE);
-        btnProfile.setFocusPainted(false);
-        btnProfile.setBorder(new LineBorder(COLOR_BORDER));
-        btnProfile.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        btnProfile.setFont(new Font("Segoe UI", Font.BOLD, 12));
-
-        btnProfile.addActionListener(e -> {
-            // ProfileFrame'i açıyoruz (authService parametresi ile)
-            new ProfileFrame(authService).setVisible(true);
+        txtSearch.addFocusListener(new FocusAdapter() {
+            @Override public void focusGained(FocusEvent e) { if (txtSearch.getText().equals("Film ara...")) { txtSearch.setText(""); txtSearch.setForeground(Color.WHITE); } }
+            @Override public void focusLost(FocusEvent e) { if (txtSearch.getText().isEmpty()) { txtSearch.setText("Film ara..."); txtSearch.setForeground(COLOR_TEXT_SUB); } }
         });
-        headerPanel.add(btnProfile);
 
-        // --- ÇIKIŞ BUTONU ---
+        txtSearch.getDocument().addDocumentListener(new DocumentListener() {
+            public void insertUpdate(DocumentEvent e) { filter(); }
+            public void removeUpdate(DocumentEvent e) { filter(); }
+            public void changedUpdate(DocumentEvent e) { filter(); }
+            private void filter() {
+                String query = txtSearch.getText().toLowerCase().trim();
+                if (query.equals("film ara...")) { displayMovies(allMovies); }
+                else { displayMovies(allMovies.stream().filter(m -> m.getName().toLowerCase().contains(query)).collect(Collectors.toList())); }
+            }
+        });
+        header.add(txtSearch);
+
+        // --- SAĞ ÜST GRUP (BUG FIX: Koordinatlar ve Genişlikler) ---
+        String name = (authService.getCurrentUser() != null) ? authService.getCurrentUser().getFirstName() : "Misafir";
+        JLabel lblName = new JLabel(name.toUpperCase());
+        lblName.setForeground(Color.WHITE);
+        lblName.setFont(new Font("Segoe UI Semibold", Font.PLAIN, 14));
+        lblName.setHorizontalAlignment(SwingConstants.RIGHT);
+        lblName.setBounds(630, 33, 200, 35);
+        header.add(lblName);
+
+        // Profil Butonu (Metin Tabanlı ve Genişliği Ayarlanmış)
+        JButton btnProfile = new JButton("PROFİL");
+        btnProfile.setBounds(840, 34, 90, 32);
+        btnProfile.setMargin(new Insets(0, 0, 0, 0)); // İç boşluğu sıfırla
+        styleHeaderButton(btnProfile, Color.WHITE);
+        btnProfile.addActionListener(e -> new ProfileFrame(authService, ticketService).setVisible(true));
+        header.add(btnProfile);
+
         JButton btnLogout = new JButton("ÇIKIŞ");
-        btnLogout.setBounds(820, 15, 100, 30);
-        btnLogout.setBackground(COLOR_ACCENT); // Çıkış butonunu daha belirgin yaptık
-        btnLogout.setForeground(Color.WHITE);
-        btnLogout.setFocusPainted(false);
-        btnLogout.setBorderPainted(false);
-        btnLogout.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        btnLogout.setFont(new Font("Segoe UI", Font.BOLD, 12));
-
+        btnLogout.setBounds(940, 34, 90, 32);
+        styleHeaderButton(btnLogout, COLOR_ACCENT);
         btnLogout.addActionListener(e -> {
             authService.logout();
             new LoginFrame(authService, ticketService).setVisible(true);
             dispose();
         });
-        headerPanel.add(btnLogout);
+        header.add(btnLogout);
 
-        // Kapatma (X) İkonu
-        JLabel lblClose = new JLabel("✕");
-        lblClose.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        lblClose.setForeground(Color.WHITE);
-        lblClose.setFont(new Font("Segoe UI", Font.BOLD, 18));
-        lblClose.setBounds(980, 10, 30, 40);
-        lblClose.addMouseListener(new MouseAdapter() {
-            public void mouseClicked(MouseEvent e) { System.exit(0); }
-        });
-        headerPanel.add(lblClose);
+        // Pencere Kontrolleri
+        JButton btnMin = new JButton("_");
+        btnMin.setBounds(1170, 15, 45, 35);
+        btnMin.setFont(new Font("Segoe UI Black", Font.BOLD, 22));
+        styleControlBtn(btnMin, Color.WHITE);
+        btnMin.addActionListener(e -> setState(JFrame.ICONIFIED));
+        header.add(btnMin);
+
+        JButton btnClose = new JButton("X"); // Daha güvenli bir "X"
+        btnClose.setBounds(1220, 15, 45, 35);
+        btnClose.setFont(new Font("Segoe UI Black", Font.BOLD, 18));
+        styleControlBtn(btnClose, COLOR_ACCENT);
+        btnClose.addActionListener(e -> System.exit(0));
+        header.add(btnClose);
+
+        contentPane.add(header, BorderLayout.NORTH);
     }
 
-    private void initMovieGrid() {
-        // Grid yapısını detaylar sığsın diye biraz daha esnetebiliriz
-        moviesPanel = new JPanel(new GridLayout(0, 4, 25, 25));
+    private void styleHeaderButton(JButton btn, Color hoverColor) {
+        btn.setBackground(new Color(30, 30, 30));
+        btn.setForeground(Color.LIGHT_GRAY);
+        btn.setFont(new Font("Segoe UI Bold", Font.PLAIN, 11));
+        btn.setFocusPainted(false);
+        btn.setBorder(new LineBorder(new Color(55, 55, 55), 1, true));
+        btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        btn.addMouseListener(new MouseAdapter() {
+            public void mouseEntered(MouseEvent e) { btn.setForeground(hoverColor); btn.setBorder(new LineBorder(hoverColor, 1, true)); }
+            public void mouseExited(MouseEvent e) { btn.setForeground(Color.LIGHT_GRAY); btn.setBorder(new LineBorder(new Color(55, 55, 55), 1, true)); }
+        });
+    }
+
+    private void styleControlBtn(JButton btn, Color hover) {
+        btn.setContentAreaFilled(false);
+        btn.setBorderPainted(false);
+        btn.setFocusPainted(false);
+        btn.setMargin(new Insets(0, 0, 0, 0)); // "..." hatasını önleyen en kritik kod
+        btn.setForeground(new Color(100, 100, 100));
+        btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        btn.addMouseListener(new MouseAdapter() {
+            public void mouseEntered(MouseEvent e) { btn.setForeground(hover); }
+            public void mouseExited(MouseEvent e) { btn.setForeground(new Color(100, 100, 100)); }
+        });
+    }
+
+    private void initCarousel() {
+        moviesPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 40, 0));
         moviesPanel.setBackground(COLOR_BG);
-        moviesPanel.setBorder(new EmptyBorder(30, 30, 30, 30));
+        moviesPanel.setBorder(new EmptyBorder(20, 50, 40, 50));
 
-        JScrollPane scrollPane = new JScrollPane(moviesPanel);
+        scrollPane = new JScrollPane(moviesPanel);
         scrollPane.setBorder(null);
-        scrollPane.getVerticalScrollBar().setUnitIncrement(20);
-        scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-        styleScrollBar(scrollPane);
+        scrollPane.setOpaque(false);
+        scrollPane.getViewport().setOpaque(false);
+        scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER);
 
-        contentPane.add(scrollPane, BorderLayout.CENTER);
+        JPanel mainWrapper = new JPanel(new BorderLayout());
+        mainWrapper.setBackground(COLOR_BG);
+        mainWrapper.add(createArrowButton("‹", -450), BorderLayout.WEST);
+        mainWrapper.add(scrollPane, BorderLayout.CENTER);
+        mainWrapper.add(createArrowButton("›", 450), BorderLayout.EAST);
+        contentPane.add(mainWrapper, BorderLayout.CENTER);
+    }
+
+    private void displayMovies(List<Media> list) {
+        moviesPanel.removeAll();
+        for (Media m : list) { if (m instanceof Film f) moviesPanel.add(createMovieCard(f)); }
+        int totalWidth = (list.size() * 360) + 100;
+        moviesPanel.setPreferredSize(new Dimension(Math.max(totalWidth, 1200), 650));
+        moviesPanel.revalidate();
+        moviesPanel.repaint();
     }
 
     private void loadMoviesFromDatabase() {
-        try {
-            // MediaRepository içinde yazdığımız yeni metodu çağırıyoruz
-            List<Media> mediaList = MediaRepository.getAllFilm();
-            moviesPanel.removeAll();
+        try { allMovies = mediaService.getAllFilms(); displayMovies(allMovies); } catch (Exception e) { e.printStackTrace(); }
+    }
 
-            for (Media media : mediaList) {
-                if (media instanceof Film film) {
-                    moviesPanel.add(createMovieCard(film));
-                }
-            }
-            moviesPanel.revalidate();
-            moviesPanel.repaint();
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Filmler yüklenirken hata: " + e.getMessage());
-            e.printStackTrace();
-        }
+    private JButton createArrowButton(String text, int amount) {
+        JButton btn = new JButton(text);
+        btn.setFont(new Font("Arial", Font.PLAIN, 80));
+        btn.setPreferredSize(new Dimension(80, 0));
+        btn.setForeground(new Color(40, 40, 40));
+        btn.setContentAreaFilled(false);
+        btn.setBorderPainted(false);
+        btn.setFocusPainted(false);
+        btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        btn.addActionListener(e -> smoothScroll(amount));
+        btn.addMouseListener(new MouseAdapter() {
+            public void mouseEntered(MouseEvent e) { btn.setForeground(COLOR_ACCENT); }
+            public void mouseExited(MouseEvent e) { btn.setForeground(new Color(40, 40, 40)); }
+        });
+        return btn;
+    }
+
+    private void smoothScroll(int amount) {
+        if (scrollTimer != null && scrollTimer.isRunning()) return;
+        targetScrollValue = scrollPane.getHorizontalScrollBar().getValue() + amount;
+        int max = scrollPane.getHorizontalScrollBar().getMaximum() - scrollPane.getViewport().getWidth();
+        if (targetScrollValue < 0) targetScrollValue = 0;
+        if (targetScrollValue > max) targetScrollValue = max;
+        scrollTimer = new Timer(10, e -> {
+            int current = scrollPane.getHorizontalScrollBar().getValue();
+            int diff = (targetScrollValue - current);
+            int step = diff / 10;
+            if (Math.abs(step) < 1) step = (diff > 0) ? 1 : -1;
+            if (Math.abs(diff) <= 2) { scrollPane.getHorizontalScrollBar().setValue(targetScrollValue); scrollTimer.stop(); }
+            else { scrollPane.getHorizontalScrollBar().setValue(current + step); }
+        });
+        scrollTimer.start();
     }
 
     private JPanel createMovieCard(Film film) {
-        JPanel card = new JPanel();
-        card.setLayout(null);
-        card.setPreferredSize(new Dimension(230, 420)); // Detaylar için yükseklik artırıldı
+        JPanel card = new JPanel(null) {
+            @Override protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(getBackground());
+                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 30, 30);
+                g2.dispose();
+            }
+        };
+        card.setPreferredSize(new Dimension(320, 600));
         card.setBackground(COLOR_CARD_BG);
-        card.setBorder(new LineBorder(COLOR_BORDER, 1));
+        card.setOpaque(false);
 
-        // Poster Alanı
-        JPanel posterPanel = new JPanel(new BorderLayout());
-        posterPanel.setBounds(0, 0, 230, 190);
-        posterPanel.setBackground(new Color(25, 25, 25));
+        // Hover Overlay
+        JPanel infoOverlay = new JPanel(new GridBagLayout());
+        infoOverlay.setBackground(new Color(0, 0, 0, 200));
+        infoOverlay.setBounds(0, 0, 320, 340);
+        infoOverlay.setVisible(false);
+        JLabel lblImdb = new JLabel("⭐ IMDB: " + film.getImdbRating());
+        lblImdb.setForeground(Color.YELLOW);
+        lblImdb.setFont(new Font("Segoe UI Bold", Font.PLAIN, 18));
+        infoOverlay.add(lblImdb);
+        card.add(infoOverlay);
 
-        String fileName = film.getName().toLowerCase().replace(" ", "_") + ".jpg";
-        URL imgUrl = getClass().getResource("/posters/" + fileName);
+        JLabel lblIcon = new JLabel("🎬");
+        lblIcon.setFont(new Font("Segoe UI", Font.PLAIN, 80));
+        lblIcon.setHorizontalAlignment(SwingConstants.CENTER);
+        lblIcon.setBounds(0, 40, 320, 200);
+        card.add(lblIcon);
 
-        if (imgUrl != null) {
-            ImageIcon icon = new ImageIcon(new ImageIcon(imgUrl).getImage().getScaledInstance(230, 190, Image.SCALE_SMOOTH));
-            posterPanel.add(new JLabel(icon), BorderLayout.CENTER);
-        } else {
-            JLabel noPoster = new JLabel("🎬");
-            noPoster.setFont(new Font("Segoe UI", Font.PLAIN, 40));
-            noPoster.setHorizontalAlignment(SwingConstants.CENTER);
-            noPoster.setForeground(Color.DARK_GRAY);
-            posterPanel.add(noPoster, BorderLayout.CENTER);
-        }
-        card.add(posterPanel);
-
-        // IMDb Puanı (Poster üzerinde küçük bir etiket)
-        JLabel lblRating = new JLabel("⭐ " + film.getImdbRating());
-        lblRating.setOpaque(true);
-        lblRating.setBackground(new Color(0,0,0,150));
-        lblRating.setForeground(Color.YELLOW);
-        lblRating.setFont(new Font("Segoe UI", Font.BOLD, 12));
-        lblRating.setBounds(165, 10, 55, 25);
-        lblRating.setHorizontalAlignment(SwingConstants.CENTER);
-        card.add(lblRating);
-
-        // Başlık
-        JLabel lblTitle = new JLabel(film.getName());
-        lblTitle.setForeground(COLOR_TEXT);
-        lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 16));
-        lblTitle.setBounds(10, 200, 210, 25);
+        JLabel lblTitle = new JLabel(film.getName().toUpperCase());
+        lblTitle.setForeground(Color.WHITE);
+        lblTitle.setFont(new Font("Segoe UI Bold", Font.PLAIN, 20));
+        lblTitle.setBounds(25, 360, 270, 30);
         card.add(lblTitle);
 
-        // Tür ve Süre
-        JLabel lblGenre = new JLabel(film.getGenre() + " • " + film.getDurationMinutes() + " dk");
-        lblGenre.setForeground(COLOR_ACCENT);
-        lblGenre.setFont(new Font("Segoe UI", Font.BOLD, 12));
-        lblGenre.setBounds(10, 225, 210, 20);
-        card.add(lblGenre);
+        JLabel lblSub = new JLabel(film.getDirector() + " | " + film.getDurationMinutes() + "dk");
+        lblSub.setForeground(COLOR_TEXT_SUB);
+        lblSub.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        lblSub.setBounds(25, 390, 270, 20);
+        card.add(lblSub);
 
-        // DETAYLAR (Yönetmen, Dil, Yaş)
-        String details = "<html><body style='width: 180px;'>" +
-                "<b>Yönetmen:</b> " + film.getDirector() + "<br>" +
-                "<b>Dil:</b> " + film.getLanguage() + " | " + "<b>Sınıf:</b> " + film.getAgeRestriction() +
-                "</body></html>";
+        JPanel sessionContainer = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 8));
+        sessionContainer.setOpaque(false);
+        sessionContainer.setBounds(20, 440, 280, 140);
 
-        JLabel lblDetails = new JLabel(details);
-        lblDetails.setForeground(new Color(170, 170, 170));
-        lblDetails.setFont(new Font("Segoe UI", Font.PLAIN, 11));
-        lblDetails.setBounds(10, 250, 210, 60);
-        lblDetails.setVerticalAlignment(SwingConstants.TOP);
-        card.add(lblDetails);
+        List<Session> sessions = SessionService.getSessionsByMediaName(film.getName());
+        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("HH:mm");
+        for (Session s : sessions) {
+            JButton b = new JButton(s.getStartTime().format(dtf));
+            b.setPreferredSize(new Dimension(65, 30));
+            b.setBackground(new Color(40, 40, 40));
+            b.setForeground(Color.WHITE);
+            b.setFont(new Font("Segoe UI Semibold", Font.PLAIN, 11));
+            b.setBorder(new LineBorder(new Color(60, 60, 60), 1, true));
+            b.setCursor(new Cursor(Cursor.HAND_CURSOR));
+            b.addActionListener(e -> new SeatSelectionFrame(film.getName(), authService, ticketService).setVisible(true));
+            sessionContainer.add(b);
+        }
+        card.add(sessionContainer);
 
-        // Satın Al Butonu
-        JButton btnBuy = new JButton("BİLET AL");
-        btnBuy.setBounds(10, 360, 210, 40);
-        btnBuy.setBackground(COLOR_ACCENT);
-        btnBuy.setForeground(Color.WHITE);
-        btnBuy.setFont(new Font("Segoe UI", Font.BOLD, 13));
-        btnBuy.setFocusPainted(false);
-        btnBuy.setBorderPainted(false);
-        btnBuy.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-
-        btnBuy.addActionListener(e -> new SeatSelectionFrame(film.getName(), authService, ticketService).setVisible(true));
-        card.add(btnBuy);
-
-        // Hover Efekti
         card.addMouseListener(new MouseAdapter() {
-            public void mouseEntered(MouseEvent e) {
-                card.setBorder(new LineBorder(COLOR_ACCENT, 2));
-                card.setBackground(new Color(50, 50, 50));
-            }
-            public void mouseExited(MouseEvent e) {
-                card.setBorder(new LineBorder(COLOR_BORDER, 1));
-                card.setBackground(COLOR_CARD_BG);
-            }
+            @Override public void mouseEntered(MouseEvent e) { infoOverlay.setVisible(true); card.setBorder(new LineBorder(COLOR_ACCENT, 1, true)); }
+            @Override public void mouseExited(MouseEvent e) { infoOverlay.setVisible(false); card.setBorder(null); }
         });
-
         return card;
-    }
-
-    private void styleScrollBar(JScrollPane scrollPane) {
-        scrollPane.getVerticalScrollBar().setUI(new BasicScrollBarUI() {
-            @Override protected void configureScrollBarColors() {
-                this.thumbColor = new Color(70, 70, 70);
-                this.trackColor = COLOR_BG;
-            }
-            @Override protected JButton createDecreaseButton(int orientation) { return createZeroButton(); }
-            @Override protected JButton createIncreaseButton(int orientation) { return createZeroButton(); }
-        });
-    }
-
-    private JButton createZeroButton() {
-        JButton btn = new JButton();
-        btn.setPreferredSize(new Dimension(0, 0));
-        return btn;
     }
 }

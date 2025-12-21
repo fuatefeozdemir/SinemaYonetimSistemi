@@ -169,7 +169,7 @@
     <schema id="162" parent="2" name="INFORMATION_SCHEMA"/>
     <schema id="163" parent="2" name="PUBLIC">
       <Current>1</Current>
-      <LastIntrospectionLocalTimestamp>2025-12-19.17:23:42</LastIntrospectionLocalTimestamp>
+      <LastIntrospectionLocalTimestamp>2025-12-20.23:02:47</LastIntrospectionLocalTimestamp>
     </schema>
     <table id="164" parent="163" name="ADVERTISEMENTS"/>
     <table id="165" parent="163" name="CASHIERS"/>

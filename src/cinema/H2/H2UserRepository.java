@@ -236,9 +236,7 @@ public class H2UserRepository implements UserRepository {
 
     @Override
     public User getUser(String email) {
-        // Önce kullanıcının tipini ve genel bilgilerini çekiyoruz
         String sql = "SELECT * FROM users WHERE email = ?";
-
         try (Connection conn = DriverManager.getConnection(URL);
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
@@ -253,23 +251,18 @@ public class H2UserRepository implements UserRepository {
                 LocalDate dob = rs.getDate("date_of_birth").toLocalDate();
                 String password = rs.getString("password");
 
-                // Tipe göre ilgili alt tablo verisini çekip nesneyi oluştur
-                switch (type) {
-                    case CUSTOMER:
-                        return getCustomerDetails(conn, id, firstName, lastName, email, dob, password);
-                    case MANAGER:
-                        return getManagerDetails(conn, id, firstName, lastName, email, dob, password);
-                }
-
-//                if ("CUSTOMER".equals(type)) {
-//                } else if ("ADMIN".equals(type)) {
-////                    return getAdminDetails(conn, id, firstName, lastName, email, dob, password);
-//                }
+                // BURASI GÜNCELLENDİ: CASHIER eklendi
+                return switch (type) {
+                    case CUSTOMER -> getCustomerDetails(conn, id, firstName, lastName, email, dob, password);
+                    case MANAGER -> getManagerDetails(conn, id, firstName, lastName, email, dob, password);
+                    case CASHIER -> getCashierDetails(conn, id, firstName, lastName, email, dob, password);
+                    default -> null;
+                };
             }
         } catch (SQLException e) {
-            System.err.println("kullanıcı bulunamadı hatası: " + e.getMessage());
+            System.err.println("Kullanıcı getirme hatası: " + e.getMessage());
         }
-        return null; // Kullanıcı bulunamadıysa
+        return null;
     }
 
     // Yardımcı metod: Customer verilerini JOIN ile çeker
@@ -314,6 +307,23 @@ public class H2UserRepository implements UserRepository {
             }
         } catch (Exception e) {
             e.printStackTrace();
+        }
+        return null;
+    }
+    private Cashier getCashierDetails(Connection conn, String id, String fn, String ln, String email, LocalDate dob, String pass) throws SQLException {
+        String sql = "SELECT * FROM cashiers WHERE user_id = ?";
+        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, id);
+            ResultSet rs = pstmt.executeQuery();
+            if (rs.next()) {
+                Cashier c = new Cashier(fn, ln, email, dob, pass,
+                        rs.getInt("staff_id"),
+                        rs.getDouble("hourly_rate"),
+                        rs.getBoolean("is_full_time"),
+                        rs.getDate("hire_date").toLocalDate());
+                c.setId(id);
+                return c;
+            }
         }
         return null;
     }

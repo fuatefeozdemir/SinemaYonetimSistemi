@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-public class MediaRepository {
+public class H2MediaRepository {
     static final String URL = "jdbc:h2:./data/CINEMA_DB;AUTO_SERVER=TRUE;DB_CLOSE_DELAY=-1";
 
     private static final String FILM = "FILM";
@@ -304,7 +304,7 @@ public class MediaRepository {
         }
         return null;
     }
-    public static List<Media> getAllFilm() throws SQLException {
+    public static List<Media> getAllFilm() {
         List<Media> mediaList = new ArrayList<>();
 
         // Şemandaki sütun isimlerine göre güncellenmiş SQL (m.duration_minutes ve m.is_visible)
@@ -363,6 +363,8 @@ public class MediaRepository {
                     mediaList.add(media);
                 }
             }
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
         return mediaList;
     }
