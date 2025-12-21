@@ -14,20 +14,16 @@ public class Customer extends User {
         setLoyaltyPoints(0);
     }
 
-    // Constructor (Overloading) (Veri yükleme senaryosunda kullanılır.)
+    // Constructor (Overloading) (Veri yüklenirken kullanılır)
     public Customer(String firstName, String lastName, String email, LocalDate dateOfBirth, String password, int loyaltyPoints) {
         super(firstName, lastName, email, dateOfBirth, password);
 
         setLoyaltyPoints(loyaltyPoints);
     }
 
-    // --- GETTER METOTLARI ---
-
     public int getLoyaltyPoints() {
         return loyaltyPoints;
     }
-
-    // --- SETTER METOTLARI ---
 
     public void setLoyaltyPoints(int loyaltyPoints) {
         if (loyaltyPoints < 0) {
@@ -37,7 +33,6 @@ public class Customer extends User {
     }
 
     // Müşterinin mevcut puanına puan eklemek için kullanılan metot.
-
     public void addLoyaltyPoints(int points) {
         if (points <= 0) {
             throw new InvalidInputException("Eklenecek puan 0'dan büyük olmalı.");

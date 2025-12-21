@@ -19,13 +19,9 @@ public class Cashier extends Personnel {
         this.dailyCount = 0; // Günlük satış sayısı 0'dan başlatılır
     }
 
-    // --- GETTER METOTLARI ---
-
     public int getDailyCount() {
         return dailyCount;
     }
-
-    // --- SETTER METOTLARI ---
 
     public void setDailyCount(int dailyCount) {
         if(dailyCount < 0) {

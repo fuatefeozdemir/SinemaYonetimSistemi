@@ -12,6 +12,7 @@ import java.util.UUID;
 public class H2MediaRepository {
     static final String URL = "jdbc:h2:./data/CINEMA_DB;AUTO_SERVER=TRUE;DB_CLOSE_DELAY=-1";
 
+    // Kontrol edilecek metinler için değişkenler
     private static final String FILM = "FILM";
     private static final String TRAILER = "TRAILER";
     private static final String ADVERTISEMENT = "ADVERTISEMENT";
@@ -24,7 +25,7 @@ public class H2MediaRepository {
         try (Connection conn = DriverManager.getConnection(URL);
              Statement stmt = conn.createStatement()) {
 
-            // 1. Ana Tablo: Media
+            // Medya tablosu
             stmt.execute("CREATE TABLE IF NOT EXISTS media (" +
                     "id VARCHAR(50) PRIMARY KEY, " +
                     "name VARCHAR(255) UNIQUE, " +
@@ -32,7 +33,7 @@ public class H2MediaRepository {
                     "is_visible BOOLEAN, " +
                     "media_type VARCHAR(20))");
 
-            // 2. Alt Tablo: Film
+            // Film tablosu
             String filmTableSql = "CREATE TABLE IF NOT EXISTS films (" +
                     "media_id VARCHAR(50) PRIMARY KEY, " +
                     "release_date DATE, " +
@@ -45,13 +46,13 @@ public class H2MediaRepository {
                     "FOREIGN KEY (media_id) REFERENCES media(id) ON DELETE CASCADE)";
             stmt.execute(filmTableSql);
 
-            // 3. Alt Tablo: Advertisement
+            // Reklam tablosu
             stmt.execute("CREATE TABLE IF NOT EXISTS advertisements (" +
                     "media_id VARCHAR(50) PRIMARY KEY, " +
                     "company VARCHAR(150), " +
                     "FOREIGN KEY (media_id) REFERENCES media(id) ON DELETE CASCADE)");
 
-            // 4. Alt Tablo: Trailer
+            // Trailer tablosu
             String trailerTableSql = "CREATE TABLE IF NOT EXISTS trailers (" +
                     "media_id VARCHAR(50) PRIMARY KEY, " +
                     "film_name VARCHAR(255), " + // Fragmanın ait olduğu filmin ismi
@@ -71,7 +72,7 @@ public class H2MediaRepository {
             conn.setAutoCommit(false);
             try {
                 var pstmt = conn.prepareStatement(mediaSql);
-                String mediaId = UUID.randomUUID().toString(); // ID burada üretilebilir
+                String mediaId = UUID.randomUUID().toString(); // Medya için rastgele ID
                 pstmt.setString(1, mediaId);
                 pstmt.setString(2, media.getName());
                 pstmt.setInt(3, media.getDurationMinutes());
@@ -101,8 +102,6 @@ public class H2MediaRepository {
                 } else if (media instanceof Trailer t) {
                     pstmt.setString(5, TRAILER);
                     pstmt.executeUpdate();
-
-                    // t.getFilmName() değerini trailers tablosuna kaydediyoruz
                     var ps = conn.prepareStatement("INSERT INTO trailers (media_id, film_name) VALUES (?, ?)");
                     ps.setString(1, mediaId);
                     ps.setString(2, t.getFilmName());
@@ -119,14 +118,13 @@ public class H2MediaRepository {
     }
 
     public static void updateMedia(Media media) {
-        // 1. Ana tabloyu güncelleme sorgusu
+
         String mediaUpdateSql = "UPDATE media SET duration_minutes = ?, is_visible = ? WHERE name = ?";
 
         try (Connection conn = DriverManager.getConnection(URL)) {
-            conn.setAutoCommit(false); // İşlem güvenliği için transaction başlatıyoruz
+            conn.setAutoCommit(false);
 
             try {
-                // --- ANA TABLO GÜNCELLEME ---
                 var pstmt = conn.prepareStatement(mediaUpdateSql);
                 pstmt.setInt(1, media.getDurationMinutes());
                 pstmt.setBoolean(2, media.isVisible());
@@ -137,7 +135,6 @@ public class H2MediaRepository {
                     throw new SQLException("Güncellenecek medya bulunamadı: " + media.getName());
                 }
 
-                // --- ALT TABLO GÜNCELLEME (if-else yapısı) ---
                 if (media instanceof Film f) {
                     String filmUpdateSql = "UPDATE films SET release_date = ?, director = ?, " +
                             "age_restriction = ?, genre = ?, language = ?, " +
@@ -152,7 +149,7 @@ public class H2MediaRepository {
                         ps.setString(5, f.getLanguage());
                         ps.setFloat(6, f.getImdbRating());
                         ps.setString(7, f.getType());
-                        ps.setString(8, f.getName()); // Media ID'yi bulmak için ismi kullanıyoruz
+                        ps.setString(8, f.getName());
                         ps.executeUpdate();
                     }
                 } else if (media instanceof Advertisement a) {
@@ -173,7 +170,7 @@ public class H2MediaRepository {
                     }
                 }
 
-                conn.commit(); // Tüm güncellemeler başarılıysa onayla
+                conn.commit();
                 System.out.println(media.getName() + " ve bağlı özellikleri başarıyla güncellendi.");
 
             } catch (SQLException e) {
@@ -198,7 +195,6 @@ public class H2MediaRepository {
 
 
     public static Media getMedia(String name) {
-        // Önce ana tablodan temel bilgileri alıyoruz
         String sql = "SELECT * FROM media WHERE name = ?";
 
         try (Connection conn = DriverManager.getConnection(URL);
@@ -213,7 +209,6 @@ public class H2MediaRepository {
                 boolean visible = rs.getBoolean("is_visible");
                 String mediaType = rs.getString("media_type");
 
-                // Medya tipine göre ilgili detay metoduna yönlendiriyoruz
                 return switch (mediaType) {
                     case "FILM" -> getFilmDetails(conn, id, name, duration, visible);
                     case "AD" -> getAdvertisementDetails(conn, id, name, duration, visible);
@@ -224,10 +219,9 @@ public class H2MediaRepository {
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        return null; // Medya bulunamadıysa
+        return null;
     }
 
-    // FILM Detaylarını Çeken Metod
     private static Film getFilmDetails(Connection conn, String id, String name, int duration, boolean visible) {
         String sql = "SELECT * FROM films WHERE media_id = ?";
         try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -274,7 +268,6 @@ public class H2MediaRepository {
         return null;
     }
 
-    // ADVERTISEMENT Detaylarını Çeken Metod
     private static Advertisement getAdvertisementDetails(Connection conn, String id, String name, int duration, boolean visible) {
         String sql = "SELECT company FROM advertisements WHERE media_id = ?";
         try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -289,7 +282,6 @@ public class H2MediaRepository {
         return null;
     }
 
-    // TRAILER Detaylarını Çeken Metod
     private static Trailer getTrailerDetails(Connection conn, String id, String name, int duration, boolean visible){
         String sql = "SELECT film_name FROM trailers WHERE media_id = ?";
         try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -306,8 +298,6 @@ public class H2MediaRepository {
     }
     public static List<Media> getAllFilm() {
         List<Media> mediaList = new ArrayList<>();
-
-        // Şemandaki sütun isimlerine göre güncellenmiş SQL (m.duration_minutes ve m.is_visible)
         String sql = "SELECT m.id, m.name, m.duration_minutes, m.is_visible, m.media_type, " +
                 "f.release_date, f.director, f.age_restriction, f.genre, " +
                 "f.language, f.imdb_rating, f.type " +
@@ -319,31 +309,27 @@ public class H2MediaRepository {
              ResultSet rs = stmt.executeQuery(sql)) {
 
             while (rs.next()) {
-                // 1. Temel Media Bilgileri (Media Tablosundan)
                 String id = rs.getString("id");
                 String name = rs.getString("name");
-                int duration = rs.getInt("duration_minutes"); // Tabloda duration_minutes olduğu için düzelttik
-                boolean isVisible = rs.getBoolean("is_visible"); // Tabloda is_visible olduğu için düzelttik
+                int duration = rs.getInt("duration_minutes");
+                boolean isVisible = rs.getBoolean("is_visible");
                 String mediaType = rs.getString("media_type");
 
                 Media media = null;
 
-                // 2. Tür Kontrolü
+                // Tür Kontrolü
                 if (FILM.equalsIgnoreCase(mediaType)) {
-                    // Film detayları (Films Tablosundan)
-                    String filmSubType = rs.getString("type");
 
-                    // Tarih kontrolü
+                    String filmSubType = rs.getString("type");
                     java.sql.Date sqlDate = rs.getDate("release_date");
                     LocalDate releaseDate = (sqlDate != null) ? sqlDate.toLocalDate() : LocalDate.now();
-
                     String director = rs.getString("director");
                     String ageRestriction = rs.getString("age_restriction");
                     String genre = rs.getString("genre");
                     String language = rs.getString("language");
                     float imdbRating = rs.getFloat("imdb_rating");
 
-                    // Alt tipe göre doğru nesneyi üret (Standard, Premium, Animation)
+                    // Filmin hangi alt sınıfından olduğuna göre nesne üretilir
                     if (PREMIUM.equalsIgnoreCase(filmSubType)) {
                         media = new Premium3D(name, duration, isVisible, releaseDate, director, ageRestriction, genre, language, imdbRating);
                     } else if (ANIMATION.equalsIgnoreCase(filmSubType)) {
@@ -353,13 +339,10 @@ public class H2MediaRepository {
                     }
                 }
                 else if (TRAILER.equalsIgnoreCase(mediaType)) {
-                    // Trailer için ayrı tabloya gitmek gerekirse trailers tablosundan veri çekilebilir
-                    // Şimdilik temel trailer nesnesi oluşturuyoruz
                     media = new Trailer(name, duration, isVisible, "Fragman");
                 }
 
                 if (media != null) {
-                    // media.setId(id); // Eğer Media class'ında setId varsa bunu açın
                     mediaList.add(media);
                 }
             }

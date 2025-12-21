@@ -31,7 +31,7 @@ public abstract class User {
         this.id = id;
     }
 
-    // --- GETTER METOTLARI ---
+    // GETTERLAR
 
     public String getFirstName() {
         return firstName;
@@ -49,7 +49,7 @@ public abstract class User {
         return password;
     }
 
-    // --- SETTER METOTLARI ---
+    // SETTERLAR
 
     public void setFirstName(String firstName) {
         if (firstName == null) {

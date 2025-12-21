@@ -8,6 +8,9 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.time.format.DateTimeFormatter;
 
+
+// Bilet fişi için dosya yazdıran metot
+
 public class TicketPrinter {
 
     private static final String SAVE_PATH = "tickets_receipts/";
@@ -21,7 +24,7 @@ public class TicketPrinter {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(fileName))) {
             writer.write("==========================================");
             writer.newLine();
-            writer.write("           SİNEMA BİLETİ / RECEIPT        ");
+            writer.write("                SİNEMA BİLETİ             ");
             writer.newLine();
             writer.write("==========================================");
             writer.newLine();

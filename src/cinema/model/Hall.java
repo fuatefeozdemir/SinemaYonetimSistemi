@@ -17,8 +17,6 @@ public class Hall {
         this.columnCount = columnCount;
     }
 
-    // GETTERLAR
-
     public String getHallName() {
         return hallName;
     }

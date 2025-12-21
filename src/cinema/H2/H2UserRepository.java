@@ -27,8 +27,7 @@ public class H2UserRepository implements UserRepository {
         try (Connection conn = DriverManager.getConnection(URL);
              Statement stmt = conn.createStatement()) {
 
-            // 1. Ana Users Tablosu
-            // ID String olduğu için PRIMARY KEY VARCHAR(50) yapıldı
+            // Kullanıcı tablosu
             String createUserTable = "CREATE TABLE IF NOT EXISTS users (" +
                     "id VARCHAR(50) PRIMARY KEY, " +
                     "first_name VARCHAR(100) NOT NULL, " +
@@ -36,11 +35,11 @@ public class H2UserRepository implements UserRepository {
                     "email VARCHAR(150) UNIQUE NOT NULL, " +
                     "date_of_birth DATE, " +
                     "password VARCHAR(255) NOT NULL, " +
-                    "user_type VARCHAR(20)" + // ADMIN veya CUSTOMER olduğunu anlamak için
+                    "user_type VARCHAR(20)" +
                     ")";
             stmt.execute(createUserTable);
 
-
+            // Müşteri tablosu
             String createCustomerTable = "CREATE TABLE IF NOT EXISTS customers (" +
                     "user_id VARCHAR(50) PRIMARY KEY, " +
                     "loyalty_points INT DEFAULT 0, " +
@@ -48,6 +47,7 @@ public class H2UserRepository implements UserRepository {
 
             stmt.execute(createCustomerTable);
 
+            // Yönetici tablosu
             String createManagerTable = "CREATE TABLE IF NOT EXISTS managers (" +
                     "user_id VARCHAR(50) PRIMARY KEY, " +
                     "staff_id INT NOT NULL, " +
@@ -58,7 +58,8 @@ public class H2UserRepository implements UserRepository {
                     ")";
             stmt.execute(createManagerTable);
 
-            String cashierTableSql = "CREATE TABLE IF NOT EXISTS cashiers (" +
+            // kASİYER TABLOSU
+            String createCashierTable = "CREATE TABLE IF NOT EXISTS cashiers (" +
                     "user_id VARCHAR(50) PRIMARY KEY, " +
                     "staff_id INT NOT NULL, " +
                     "hourly_rate DOUBLE, " +
@@ -67,10 +68,7 @@ public class H2UserRepository implements UserRepository {
                     "daily_count INT DEFAULT 0, " +
                     "FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE" +
                     ")";
-            stmt.execute(cashierTableSql);
-
-
-            System.out.println("Veritabanı tabloları başarıyla hazırlandı.");
+            stmt.execute(createCashierTable);
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
@@ -81,10 +79,10 @@ public class H2UserRepository implements UserRepository {
         String userSql = "INSERT INTO users (id, first_name, last_name, email, date_of_birth, password, user_type) VALUES (?, ?, ?, ?, ?, ?, ?)";
         String newUserId = UUID.randomUUID().toString();
         try (Connection conn = DriverManager.getConnection(URL)) {
-            conn.setAutoCommit(false); // Transaction başlat (Biri başarısız olursa ikisini de iptal et)
+            conn.setAutoCommit(false); // Biri başarısız olursa ikisini de geri almak için
             try {
-                // 1. Ana tabloya ekle
 
+                // Kullanıcı tablosuna ekle
                 PreparedStatement pstmt = conn.prepareStatement(userSql);
                 pstmt.setString(1, newUserId);
                 pstmt.setString(2, user.getFirstName());
@@ -93,7 +91,7 @@ public class H2UserRepository implements UserRepository {
                 pstmt.setDate(5, java.sql.Date.valueOf(user.getDateOfBirth()));
                 pstmt.setString(6, user.getPassword());
 
-                // 2. Alt tabloya (Customer/Admin) ekle
+                // Alt tablolara (Müşteri/Yönetici/Kasiyer) ekler
                 if (user instanceof Customer c) {
                     pstmt.setString(7, CUSTOMER);
                     pstmt.executeUpdate();
@@ -108,7 +106,6 @@ public class H2UserRepository implements UserRepository {
                 } else if (user instanceof Manager m) {
                     pstmt.setString(7, MANAGER);
                     pstmt.executeUpdate();
-
 
                     PreparedStatement ps = conn.prepareStatement("INSERT INTO managers (user_id, staff_id, hourly_rate, is_full_time, hire_date) VALUES (?, ?, ?, ?, ?)");
                     ps.setString(1, newUserId);
@@ -133,11 +130,11 @@ public class H2UserRepository implements UserRepository {
                     }
                 }
 
-                conn.commit(); // Her şey yolundaysa kaydet
+                conn.commit(); // Sorun yoksa kaydet
             } catch (SQLException e) {
                 System.out.println("HATA");
                 e.printStackTrace();
-                conn.rollback(); // Hata varsa geri al
+                conn.rollback(); // İkinci tablo oluşamadıysa her şeyi geri al
             }
         } catch (SQLException ex) {
             throw new RuntimeException(ex);
@@ -150,9 +147,9 @@ public class H2UserRepository implements UserRepository {
         String userSql = "UPDATE users SET first_name = ?, last_name = ?, email = ?, date_of_birth = ?, password = ? WHERE id = ?";
 
         try (Connection conn = DriverManager.getConnection(URL)) {
-            conn.setAutoCommit(false); // İşlemi güvenli hale getir
+            conn.setAutoCommit(false); // Biri başarısız olursa ikisini de geri almak için
             try {
-                // Önce ana tabloyu güncelle
+                // Kullanıcı tablosu
                 PreparedStatement pstmt = conn.prepareStatement(userSql);
                 pstmt.setString(1, user.getFirstName());
                 pstmt.setString(2, user.getLastName());
@@ -162,11 +159,11 @@ public class H2UserRepository implements UserRepository {
                 pstmt.setString(6, user.getId());
                 pstmt.executeUpdate();
 
-                // Tipine göre alt tabloyu güncelle
+                // Alt tabloyu (Müşteri/Yönetici/Kasiyer) günceller
                 if (user instanceof Customer c) {
                     String custSql = "UPDATE customers SET loyalty_points = ? WHERE user_id = ?";
                     var pstmtCust = conn.prepareStatement(custSql);
-                    pstmtCust.setInt(1, c.getLoyaltyPoints()); // Customer'a özel alan
+                    pstmtCust.setInt(1, c.getLoyaltyPoints());
                     pstmtCust.setString(2, c.getId());
                     pstmtCust.executeUpdate();
                 } else if (user instanceof Manager m) {
@@ -186,7 +183,6 @@ public class H2UserRepository implements UserRepository {
                     }
                 }
                 conn.commit();
-                System.out.println("Kullanıcı ve bağlı tüm bilgiler güncellendi: " + user.getFirstName());
             } catch (SQLException e) {
                 conn.rollback();
                 throw e;
@@ -198,39 +194,34 @@ public class H2UserRepository implements UserRepository {
 
     @Override
     public void deleteUser(String email) {
-        // Önce bağımlı kayıtları (biletleri) silmemiz gerekiyor
         String deleteTicketsSql = "DELETE FROM tickets WHERE customer_email = ?";
         String deleteUserSql = "DELETE FROM users WHERE email = ?";
 
         try (Connection conn = DriverManager.getConnection(URL)) {
-            // İşlemlerin güvenliği için transaction başlatıyoruz
             conn.setAutoCommit(false);
 
             try (PreparedStatement pstmtTickets = conn.prepareStatement(deleteTicketsSql);
                  PreparedStatement pstmtUser = conn.prepareStatement(deleteUserSql)) {
 
-                // 1. Adım: Kullanıcıya ait biletleri temizle
+                // Eğer kullanıcının bileti varsa hesabı silmeden önce biletleri siler
                 pstmtTickets.setString(1, email);
                 pstmtTickets.executeUpdate();
 
-                // 2. Adım: Kullanıcıyı sil
+                // Kullanıcıyı sil
                 pstmtUser.setString(1, email);
                 int affectedRows = pstmtUser.executeUpdate();
 
                 if (affectedRows > 0) {
                     conn.commit(); // Her iki işlem de başarılıysa onayla
-                    System.out.println(email + " has been successfully deleted along with their tickets.");
                 } else {
                     conn.rollback(); // Kullanıcı bulunamazsa işlemleri geri al
-                    System.out.println("User not found.");
                 }
 
             } catch (SQLException e) {
-                conn.rollback(); // Herhangi bir hatada tüm değişiklikleri iptal et
-                System.err.println("Delete error: " + e.getMessage());
+                conn.rollback(); // Herhangi bir hatada işlemleri geri al
             }
         } catch (SQLException e) {
-            System.err.println("Database connection error: " + e.getMessage());
+            throw new RuntimeException(e);
         }
     }
 
@@ -251,7 +242,6 @@ public class H2UserRepository implements UserRepository {
                 LocalDate dob = rs.getDate("date_of_birth").toLocalDate();
                 String password = rs.getString("password");
 
-                // BURASI GÜNCELLENDİ: CASHIER eklendi
                 return switch (type) {
                     case CUSTOMER -> getCustomerDetails(conn, id, firstName, lastName, email, dob, password);
                     case MANAGER -> getManagerDetails(conn, id, firstName, lastName, email, dob, password);
@@ -260,12 +250,11 @@ public class H2UserRepository implements UserRepository {
                 };
             }
         } catch (SQLException e) {
-            System.err.println("Kullanıcı getirme hatası: " + e.getMessage());
+            throw new RuntimeException(e);
         }
         return null;
     }
 
-    // Yardımcı metod: Customer verilerini JOIN ile çeker
     private Customer getCustomerDetails(Connection conn, String id, String fn, String ln, String email, LocalDate dob, String pass) throws SQLException {
         String sql = "SELECT loyalty_points FROM customers WHERE user_id = ?";
         try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -291,16 +280,13 @@ public class H2UserRepository implements UserRepository {
             ResultSet rs = pstmt.executeQuery();
 
             if (rs.next()) {
-                // Verileri RS'den çekiyoruz
                 int staffID = rs.getInt("staff_id");
                 double hourlyRate = rs.getDouble("hourly_rate");
                 boolean isFullTime = rs.getBoolean("is_full_time");
                 LocalDate hireDate = rs.getDate("hire_date").toLocalDate();
 
-                // Manager nesnesini oluştur (Not: StoreManager gibi somut bir sınıf kullanmalısın)
                 Manager manager = new Manager(fn, ln, email, dob, pass, staffID, hourlyRate, isFullTime, hireDate);
 
-                // Ana tablodan gelen ID'yi set ediyoruz
                 manager.setId(id);
 
                 return manager;

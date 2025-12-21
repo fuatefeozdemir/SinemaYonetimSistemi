@@ -27,8 +27,7 @@ public abstract class Film extends Media implements PricedContent {
         this.type = this.getFilmType();
     }
 
-
-// --- GETTER METOTLARI ---
+    // GETTERLAR
 
     public LocalDate getReleaseDate() {
         return releaseDate;
@@ -54,7 +53,7 @@ public abstract class Film extends Media implements PricedContent {
         return imdbRating;
     }
 
-    // --- SETTER METOTLARI ---
+    // SETTERLAR
 
     public void setReleaseDate(LocalDate releaseDate) {
         if (releaseDate == null || releaseDate.isAfter(LocalDate.now())) {

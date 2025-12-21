@@ -14,7 +14,7 @@ public abstract class Media {
         setVisible(isVisible);
     }
 
-    // --- GETTER METOTLARI ---
+    // GETTERLAR
 
     public String getName() {
         return name;
@@ -26,7 +26,7 @@ public abstract class Media {
         return isVisible;
     }
 
-    // --- SETTER METOTLARI ---
+    // SETTERLAR
 
     public void setName(String name) {
         if (name == null) {

@@ -21,13 +21,13 @@ public class TicketService {
         this.ticketRepository = ticketRepository;
     }
 
-    // --- MÜŞTERİ (ONLINE) SATIŞ ---
+    // Müşteri bilet satışı
     public void buyTicket(String sessionId, Customer customer, String seatCode) {
         Ticket ticket = processTicket(sessionId, customer, seatCode);
         ticketRepository.saveTicket(ticket);
     }
 
-    // --- KASİYER (GİŞE) SATIŞI ---
+    // Kasiyer bilet satışı (Overloading)
     public void buyTicket(String sessionId, Customer customer, String seatCode, Cashier cashier) {
         Ticket ticket = processTicket(sessionId, customer, seatCode);
         ticketRepository.saveTicket(ticket);
@@ -45,30 +45,27 @@ public class TicketService {
         }
 
         boolean isDiscounted = calculateDiscountStatus(customer);
-        double finalPrice = 100.0; // Varsayılan/Hata durumunda kullanılacak fiyat
+        double finalPrice = 100.0;
 
-        // HATA BURADAYDI: Media nesnesini Film'e cast etmeliyiz
         if (session.getFilm() instanceof Film film) {
-            // Eğer nesne bir Film ise (Standard2D, Premium3D veya Animation)
             finalPrice = film.calculatePrice(isDiscounted);
         } else {
-            // Eğer ileride Film olmayan başka bir Media türü eklersen burası çalışır
             System.out.println("Uyarı: Bu içerik bir Film türünde değil, standart fiyat uygulandı.");
         }
 
-        // Yeni bilet nesnesi oluşturma
         Ticket newTicket = new Ticket(session.getSessionId(), customer.getEmail(), seatCode, finalPrice);
 
-        // Müşteriye sadakat puanı ekle
-        customer.setLoyaltyPoints(customer.getLoyaltyPoints() + 5);
+        // Her bilet satışı için müşteriye 5 puan ekler
+        customer.addLoyaltyPoints(5);
 
         return newTicket;
     }
 
+    // İndirim uygulanıp uygulanmayacağına bakan metot
     private boolean calculateDiscountStatus(Customer customer) {
         if (customer.getDateOfBirth() == null) return false;
         long age = ChronoUnit.YEARS.between(customer.getDateOfBirth(), LocalDate.now());
-        // Yaşı 18'den küçükse indirim hakkı kazanır
+        // Yaş 18 den küçükse indirim uygulanır
         return age < 18;
     }
 

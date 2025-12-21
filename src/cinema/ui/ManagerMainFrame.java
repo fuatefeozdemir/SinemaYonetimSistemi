@@ -13,7 +13,6 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.RoundRectangle2D;
-import java.time.LocalDate;
 import java.util.List;
 
 public class ManagerMainFrame extends JFrame {
@@ -27,7 +26,7 @@ public class ManagerMainFrame extends JFrame {
     private DefaultTableModel model;
     private int mouseX, mouseY;
 
-    // Renk Paleti (Diğer Frame'ler ile %100 Uyumlu)
+    // Premium Renk Paleti
     private final Color COLOR_BG = new Color(10, 10, 10);
     private final Color COLOR_CARD = new Color(22, 22, 22);
     private final Color COLOR_ACCENT = new Color(229, 9, 20);
@@ -70,7 +69,7 @@ public class ManagerMainFrame extends JFrame {
             public void mouseDragged(MouseEvent e) { setLocation(getX() + e.getX() - mouseX, getY() + e.getY() - mouseY); }
         });
 
-        // 1. Logo
+        // Logo
         JLabel lblLogo = new JLabel("SİNEMA");
         lblLogo.setFont(new Font("Segoe UI Black", Font.BOLD, 30));
         lblLogo.setForeground(COLOR_ACCENT);
@@ -83,15 +82,7 @@ public class ManagerMainFrame extends JFrame {
         lblSub.setBounds(195, 32, 200, 30);
         header.add(lblSub);
 
-        // --- SAĞ ÜST GRUP ---
-        String name = (authService.getCurrentUser() != null) ? authService.getCurrentUser().getFirstName() : "Admin";
-        JLabel lblName = new JLabel(name.toUpperCase());
-        lblName.setForeground(Color.WHITE);
-        lblName.setFont(new Font("Segoe UI Semibold", Font.PLAIN, 14));
-        lblName.setHorizontalAlignment(SwingConstants.RIGHT);
-        lblName.setBounds(500, 33, 200, 35);
-        header.add(lblName);
-
+        // Profil ve Çıkış Butonları
         JButton btnProfile = new JButton("PROFİL");
         btnProfile.setBounds(710, 34, 90, 32);
         styleHeaderButton(btnProfile, Color.WHITE);
@@ -107,16 +98,16 @@ public class ManagerMainFrame extends JFrame {
         });
         header.add(btnLogout);
 
-        // Pencere Kontrolleri
+        // --- SAĞ ÜST KONTROL TUŞLARI (CustomerMainFrame ile aynı) ---
         JButton btnMin = new JButton("_");
-        btnMin.setBounds(1000, 15, 40, 35);
+        btnMin.setBounds(1000, 15, 35, 35);
         btnMin.setFont(new Font("Segoe UI Black", Font.BOLD, 22));
         styleControlBtn(btnMin, Color.WHITE);
         btnMin.addActionListener(e -> setState(JFrame.ICONIFIED));
         header.add(btnMin);
 
         JButton btnClose = new JButton("X");
-        btnClose.setBounds(1045, 15, 40, 35);
+        btnClose.setBounds(1040, 15, 35, 35);
         btnClose.setFont(new Font("Segoe UI Black", Font.BOLD, 18));
         styleControlBtn(btnClose, COLOR_ACCENT);
         btnClose.addActionListener(e -> System.exit(0));
@@ -157,7 +148,7 @@ public class ManagerMainFrame extends JFrame {
         contentPane.add(footer, BorderLayout.SOUTH);
     }
 
-    // --- YARDIMCI METOTLAR ---
+    // --- STİL METOTLARI ---
 
     private void styleTable(JTable table) {
         table.setRowHeight(45);
@@ -205,7 +196,7 @@ public class ManagerMainFrame extends JFrame {
     }
 
     private void styleHeaderButton(JButton btn, Color hoverColor) {
-        btn.setBackground(new Color(30, 30, 30));
+        btn.setContentAreaFilled(false);
         btn.setForeground(Color.LIGHT_GRAY);
         btn.setFont(new Font("Segoe UI Bold", Font.PLAIN, 11));
         btn.setFocusPainted(false);
@@ -221,6 +212,7 @@ public class ManagerMainFrame extends JFrame {
         btn.setContentAreaFilled(false);
         btn.setBorderPainted(false);
         btn.setFocusPainted(false);
+        btn.setMargin(new Insets(0, 0, 0, 0));
         btn.setForeground(new Color(100, 100, 100));
         btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
         btn.addMouseListener(new MouseAdapter() {
@@ -229,7 +221,7 @@ public class ManagerMainFrame extends JFrame {
         });
     }
 
-    // --- LOGIC (Eskisiyle Aynı) ---
+    // --- VERİTABANI VE KAYIT MANTIĞI ---
 
     private void loadFilmsFromDatabase() {
         model.setRowCount(0);
@@ -238,7 +230,7 @@ public class ManagerMainFrame extends JFrame {
             for (Media m : films) {
                 if (m instanceof Film f) {
                     model.addRow(new Object[]{
-                            "ID", // Veritabanı ID'niz varsa buraya ekleyin
+                            f.getFilmType(), // "Premium", "Standard" vb.
                             f.getName(),
                             f.getGenre(),
                             f.getDurationMinutes() + " dk",
@@ -250,20 +242,21 @@ public class ManagerMainFrame extends JFrame {
     }
 
     private void onAddFilm() {
-        // FilmFormDialog'un da ManagerMainFrame gibi undecorated veya modern olması önerilir
-        FilmFormDialog dlg = new FilmFormDialog(this, "Film Ekle", null);
+        // FilmFormDialog'un Service katmanını kullanması gerekir!
+        FilmFormDialog dlg = new FilmFormDialog(this, "Film Ekle", null, mediaService);
         dlg.setVisible(true);
-        loadFilmsFromDatabase();
+        loadFilmsFromDatabase(); // Dialog kapandıktan sonra listeyi yenile
     }
 
     private void onEditFilm() {
         int r = tblFilms.getSelectedRow();
         if (r < 0) { JOptionPane.showMessageDialog(this, "Film seçiniz!"); return; }
-        String name = model.getValueAt(r, 1).toString();
-        Media m = mediaService.getMediaByName(name);
+
+        String currentName = model.getValueAt(r, 1).toString();
+        Media m = mediaService.getMediaByName(currentName);
+
         if (m instanceof Film f) {
-            Object[] current = {0, f.getName(), f.getGenre(), f.getDurationMinutes(), f.isVisible() ? "AKTİF" : "PASİF"};
-            FilmFormDialog dlg = new FilmFormDialog(this, "Film Düzenle", current);
+            FilmFormDialog dlg = new FilmFormDialog(this, "Film Düzenle", f, mediaService);
             dlg.setVisible(true);
             loadFilmsFromDatabase();
         }

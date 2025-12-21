@@ -13,12 +13,10 @@ import java.util.List;
 public class MediaService {
 
     public List<Media> getAllFilms() {
-        // Repository'den gelen ham veriyi UI'ya iletir
         return H2MediaRepository.getAllFilm();
     }
 
     public void addMedia(Media media) {
-        // İş mantığı kontrolleri burada yapılabilir (Örn: İsim boş mu?)
         H2MediaRepository.saveMedia(media);
     }
 
@@ -33,9 +31,8 @@ public class MediaService {
     public Media getMediaByName(String name) {
         return H2MediaRepository.getMedia(name);
     }
+
     public List<Session> getSessionsByFilmId(String name) {
-        // Veritabanından (H2) bu filmId'ye ait seansları çeker:
-        // "SELECT * FROM sessions WHERE film_id = ?"
         return H2SessionRepository.getSessionsByMediaName(name);
     }
 }

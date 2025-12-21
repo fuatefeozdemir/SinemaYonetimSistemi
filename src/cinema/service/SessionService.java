@@ -17,13 +17,12 @@ public class SessionService {
         if (sessionId == null || sessionId.isEmpty()) {
             return null;
         }
-        // Repository'deki mevcut getSession metodunu çağırıyoruz
         return H2SessionRepository.getSession(sessionId);
     }
 
     public static List<Session> getSessionsByMediaName(String mediaName) {
         List<Session> sessions = new ArrayList<>();
-        // Senin Repository'ndeki kolon isimlerini (media_name) kullanıyoruz
+
         String sql = "SELECT * FROM sessions WHERE media_name = ?";
 
         try (Connection conn = DriverManager.getConnection(URL);
@@ -33,7 +32,6 @@ public class SessionService {
             ResultSet rs = pstmt.executeQuery();
 
             while (rs.next()) {
-                // Repository'ndeki getSession mantığına paralel nesne oluşturma
                 Hall hall = new H2HallRepository().getHall(rs.getString("hall_name"));
                 Media media = new H2MediaRepository().getMedia(rs.getString("media_name"));
 

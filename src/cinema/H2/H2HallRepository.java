@@ -6,13 +6,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class H2HallRepository {
-    private static final String URL = "jdbc:h2:./data/CINEMA_DB;AUTO_SERVER=TRUE;DB_CLOSE_DELAY=-1"; // Veritabanı yolun
+    private static final String URL = "jdbc:h2:./data/CINEMA_DB;AUTO_SERVER=TRUE;DB_CLOSE_DELAY=-1";
 
     public static void initialize() {
         try (Connection conn = DriverManager.getConnection(URL);
              Statement stmt = conn.createStatement()) {
 
-            // Hall tablosunu oluşturuyoruz
+            // Hall tablosu
             stmt.execute("CREATE TABLE IF NOT EXISTS halls (" +
                     "hall_name VARCHAR(100) PRIMARY KEY, " +
                     "row_count INT NOT NULL, " +
@@ -22,7 +22,6 @@ public class H2HallRepository {
         }
     }
 
-    // 1. Salon Kaydetme
     public static void saveHall(Hall hall) {
         String sql = "INSERT INTO halls (hall_name, row_count, column_count) VALUES (?, ?, ?)";
         try (Connection conn = DriverManager.getConnection(URL);
@@ -37,7 +36,6 @@ public class H2HallRepository {
         }
     }
 
-    // 2. Salon Getirme
     public static Hall getHall(String name) {
         String sql = "SELECT * FROM halls WHERE hall_name = ?";
         try (Connection conn = DriverManager.getConnection(URL);
@@ -59,7 +57,6 @@ public class H2HallRepository {
         return null;
     }
 
-    // 3. Tüm Salonları Listeleme
     public static List<Hall> getAllHalls() {
         List<Hall> halls = new ArrayList<>();
         String sql = "SELECT * FROM halls";
@@ -80,7 +77,6 @@ public class H2HallRepository {
         return halls;
     }
 
-    // 4. Salon Silme
     public static void deleteHall(String name) {
         String sql = "DELETE FROM halls WHERE hall_name = ?";
         try (Connection conn = DriverManager.getConnection(URL);

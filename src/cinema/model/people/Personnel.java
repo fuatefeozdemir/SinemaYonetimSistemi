@@ -23,7 +23,7 @@ public abstract class Personnel extends User {
         setHireDate(hireDate);
     }
 
-    // --- GETTER METOTLARI ---
+    // GETTERLAR
 
     public int getStaffID() {
         return staffID;
@@ -38,7 +38,7 @@ public abstract class Personnel extends User {
         return hireDate;
     }
 
-    // --- SETTER METOTLARI ---
+    // SETTERLAR
 
     public void setStaffID(int staffID) {
         if(staffID < 0) {

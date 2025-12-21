@@ -13,8 +13,7 @@ public class Ticket {
     private final double finalPrice;
     private final String session;
     private final String customer;
-    private final String seatCode; // Seat nesnesi yerine String kod tutuyoruz
-
+    private final String seatCode;
 
     public Ticket(String session, String customer, String seatCode, double finalPrice) {
         this.ticketId = UUID.randomUUID().toString();

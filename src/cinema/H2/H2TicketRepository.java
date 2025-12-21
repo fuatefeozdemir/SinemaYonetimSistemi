@@ -11,8 +11,6 @@ import java.util.List;
 
 public class H2TicketRepository implements TicketRepository {
     private static final String URL = "jdbc:h2:./data/CINEMA_DB;AUTO_SERVER=TRUE;DB_CLOSE_DELAY=-1";
-    // Tarihleri DB'den okurken veya yazarken kullanılacak format
-    private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     @Override
     public void initialize() {
@@ -82,17 +80,13 @@ public class H2TicketRepository implements TicketRepository {
                 Timestamp startTs = rs.getTimestamp("start_time");
                 Timestamp endTs = rs.getTimestamp("end_time");
 
-                // LocalDateTime dönüşümleri
                 LocalDateTime startTime = startTs != null ? startTs.toLocalDateTime() : null;
                 LocalDateTime endTime = endTs != null ? endTs.toLocalDateTime() : null;
 
-                // Session nesnesini oluşturma
-                // Not: Hall ve Media için ilgili repository'lerden tam nesne çekebilir
-                // veya sadece ID'lerini içeren boş nesneler atayabilirsin.
                 Session session = new Session(
                         sessionId,
-                        null, // Hall nesnesi (Gerekirse hallRepository.getById(rs.getString("hall_id")))
-                        null, // Media nesnesi (Film bilgisi)
+                        null, // Hall
+                        null, // Media
                         startTime,
                         endTime
                 );
@@ -109,9 +103,6 @@ public class H2TicketRepository implements TicketRepository {
     public List<String> getOccupiedSeats(String sessionId) {
         List<String> occupied = new ArrayList<>();
 
-        // Doğrudan session_id üzerinden filtreleme yapıyoruz.
-        // Join'e gerek kalmadı çünkü bilet tablosunda zaten session_id var.
-        // Sadece iade edilmemiş (is_refunded = FALSE) biletleri alıyoruz.
         String query = "SELECT seat_code FROM tickets WHERE session_id = ? AND is_refunded = FALSE";
 
         try (Connection conn = DriverManager.getConnection(URL);
@@ -148,7 +139,6 @@ public class H2TicketRepository implements TicketRepository {
                         rs.getDouble("final_price")
                 );
 
-                // KRİTİK DOKUNUŞ: Veritabanındaki gerçek ID'yi Java nesnesine zorla yazıyoruz
                 ticket.setTicketId(rs.getString("ticket_id"));
 
                 tickets.add(ticket);
