@@ -21,7 +21,7 @@ public class Standard2D extends Film {
 
     @Override
     public String getFilmType() {
-        return "Standart";
+        return "Standard";
     }
 
     @Override

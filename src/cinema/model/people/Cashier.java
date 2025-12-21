@@ -5,6 +5,11 @@ import cinema.exception.InvalidInputException;
 import java.time.LocalDate;
 
 public class Cashier extends Personnel {
+    private int staffID;
+    private double hourlyRate; // Çalışanın saatlik ücreti
+    private boolean isFullTime; // Çalışanın part time çalışıp çalışmama durumu
+    private LocalDate hireDate; // Çalışanın işe alım tarihi
+
     private int dailyCount; // Günlük yapılan bilet satışı
 
     public Cashier(String firstName, String lastName, String email, LocalDate dateOfBirth, String password,

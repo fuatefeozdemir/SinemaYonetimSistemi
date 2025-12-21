@@ -14,36 +14,42 @@ public abstract class Film extends Media implements PricedContent {
     private String genre;
     private String language;
     private float imdbRating;
+    private final String type;
 
-    public Film(String title, int durationMinutes, boolean isVisible,
-                LocalDate releaseDate, String director, String ageRestriction, String genre, String language, float imdbRating) {
-        super(title, durationMinutes, isVisible);
-
+    public Film(String name, int durationMinutes, boolean isVisible, LocalDate releaseDate, String director, String ageRestriction, String genre, String language, float imdbRating) {
+        super(name, durationMinutes, isVisible);
         setReleaseDate(releaseDate);
         setDirector(director);
         setAgeRestriction(ageRestriction);
         setGenre(genre);
         setLanguage(language);
         setImdbRating(imdbRating);
+        this.type = this.getFilmType();
     }
 
-    // --- GETTER METOTLARI ---
+
+// --- GETTER METOTLARI ---
 
     public LocalDate getReleaseDate() {
         return releaseDate;
     }
+
     public String getDirector() {
         return director;
     }
+
     public String getAgeRestriction() {
         return ageRestriction;
     }
+
     public String getGenre() {
         return genre;
     }
+
     public String getLanguage() {
         return language;
     }
+
     public float getImdbRating() {
         return imdbRating;
     }
@@ -56,35 +62,44 @@ public abstract class Film extends Media implements PricedContent {
         }
         this.releaseDate = releaseDate;
     }
+
     public void setDirector(String director) {
         if (director == null) {
             throw new InvalidInputException("Yönetmen null olamaz.");
         }
         this.director = director;
     }
+
     public void setAgeRestriction(String ageRestriction) {
         if (ageRestriction == null) {
             throw new InvalidInputException("Yaş kısıtlaması null olamaz.");
         }
         this.ageRestriction = ageRestriction;
     }
+
     public void setGenre(String genre) {
         if (genre == null) {
             throw new InvalidInputException("Film türü null olamaz.");
         }
         this.genre = genre;
     }
+
     public void setLanguage(String language) {
         if (language == null) {
             throw new InvalidInputException("Film dili null olamaz.");
         }
         this.language = language;
     }
+
     public void setImdbRating(float imdbRating) {
         if (imdbRating < 0 || imdbRating > 10) {
             throw new InvalidInputException("Film puanı 0-10 dışında olamaz.");
         }
         this.imdbRating = imdbRating;
+    }
+
+    public String getType() {
+        return type;
     }
 
     // PricedContent arayüzünden override edilir

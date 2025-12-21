@@ -1,256 +1,255 @@
 package cinema.ui;
 
+import cinema.model.people.User;
+import cinema.model.people.Customer;
+import cinema.model.people.Cashier;
+import cinema.service.AuthService;
+import cinema.service.TicketService;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
-import javax.swing.border.MatteBorder;
+import javax.swing.border.LineBorder;
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.geom.RoundRectangle2D;
 import java.util.ArrayList;
 
 public class PaymentFrame extends JFrame {
 
+    private final AuthService authService;
+    private final TicketService ticketService;
+    private final String targetCustomerEmail;
     private JPanel contentPane;
     private JTextField txtCardName, txtCardNumber, txtExpiry, txtCVV;
     private int mouseX, mouseY;
 
-    // Veriler
     private String movieTitle;
     private ArrayList<String> selectedSeats;
-    private final double TICKET_PRICE = 150.0; // Bilet Fiyatı
+    private final String selectedSession;
+    private final double TICKET_PRICE = 150.0;
 
-    // Renk Paleti
-    private final Color COLOR_BG = new Color(33, 33, 33);
-    private final Color COLOR_PANEL = new Color(45, 45, 45); // Panel Rengi
-    private final Color COLOR_ACCENT = new Color(229, 9, 20); // Kırmızı
-    private final Color COLOR_TEXT = new Color(240, 240, 240);
-    private final Color COLOR_TEXT_MUTED = new Color(150, 150, 150);
+    // Premium Renk Paleti (Diğer ekranlarla tam uyumlu)
+    private final Color COLOR_BG = new Color(10, 10, 10);
+    private final Color COLOR_CARD = new Color(22, 22, 22);
+    private final Color COLOR_ACCENT = new Color(229, 9, 20);
+    private final Color COLOR_TEXT_MAIN = new Color(245, 245, 245);
+    private final Color COLOR_TEXT_SUB = new Color(150, 150, 150);
+    private final Color COLOR_BORDER = new Color(35, 35, 35);
 
-    // Test için Main Metodu
-    public static void main(String[] args) {
-        EventQueue.invokeLater(() -> {
-            try {
-                // Test verisi
-                ArrayList<String> seats = new ArrayList<>();
-                seats.add("A1");
-                seats.add("A2");
-                PaymentFrame frame = new PaymentFrame("Inception", seats);
-                frame.setVisible(true);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        });
-    }
-
-    public PaymentFrame(String movieTitle, ArrayList<String> selectedSeats) {
+    public PaymentFrame(String movieTitle, ArrayList<String> selectedSeats, String selectedSession,
+                        AuthService authService, TicketService ticketService, String targetCustomerEmail) {
         this.movieTitle = movieTitle;
         this.selectedSeats = selectedSeats;
+        this.selectedSession = selectedSession;
+        this.authService = authService;
+        this.ticketService = ticketService;
+        this.targetCustomerEmail = targetCustomerEmail;
 
         setUndecorated(true);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        setBounds(100, 100, 800, 500);
+        setSize(850, 550);
         setLocationRelativeTo(null);
+        setShape(new RoundRectangle2D.Double(0, 0, 850, 550, 30, 30));
 
-        contentPane = new JPanel();
+        contentPane = new JPanel(null);
         contentPane.setBackground(COLOR_BG);
-        contentPane.setLayout(null);
+        contentPane.setBorder(new LineBorder(COLOR_BORDER, 1));
         setContentPane(contentPane);
 
-        // --- HEADER ---
-        createHeader();
-
-        // --- SOL PANEL: SİPARİŞ ÖZETİ ---
-        JPanel summaryPanel = new JPanel();
-        summaryPanel.setBounds(30, 60, 300, 410);
-        summaryPanel.setBackground(COLOR_PANEL);
-        summaryPanel.setLayout(null);
-        // Hafif yuvarlak köşe efekti yerine border ekleyelim
-        summaryPanel.setBorder(BorderFactory.createMatteBorder(0, 0, 0, 2, new Color(60,60,60)));
-        contentPane.add(summaryPanel);
-
-        JLabel lblSummaryTitle = new JLabel("SİPARİŞ ÖZETİ");
-        lblSummaryTitle.setForeground(COLOR_ACCENT);
-        lblSummaryTitle.setFont(new Font("Segoe UI", Font.BOLD, 18));
-        lblSummaryTitle.setBounds(20, 20, 200, 30);
-        summaryPanel.add(lblSummaryTitle);
-
-        // Film Bilgisi
-        addSummaryLabel(summaryPanel, "FİLM:", 70, true);
-        addSummaryLabel(summaryPanel, movieTitle, 95, false);
-
-        // Koltuklar
-        addSummaryLabel(summaryPanel, "KOLTUKLAR:", 135, true);
-        // Köşeli parantezleri kaldırıp temiz gösterim yapalım
-        String seatsStr = selectedSeats.toString().replace("[", "").replace("]", "");
-        addSummaryLabel(summaryPanel, seatsStr, 160, false);
-
-        // Tarih (Mock)
-        addSummaryLabel(summaryPanel, "TARİH / SEANS:", 200, true);
-        addSummaryLabel(summaryPanel, "Bugün - 20:00", 225, false);
-
-        // Ara Çizgi
-        JSeparator separator = new JSeparator();
-        separator.setForeground(Color.GRAY);
-        separator.setBounds(20, 280, 260, 10);
-        summaryPanel.add(separator);
-
-        // Toplam Tutar
-        double totalAmount = selectedSeats.size() * TICKET_PRICE;
-        JLabel lblTotalLabel = new JLabel("TOPLAM TUTAR");
-        lblTotalLabel.setForeground(COLOR_TEXT_MUTED);
-        lblTotalLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        lblTotalLabel.setBounds(20, 300, 150, 20);
-        summaryPanel.add(lblTotalLabel);
-
-        JLabel lblTotalPrice = new JLabel(totalAmount + " TL");
-        lblTotalPrice.setForeground(Color.WHITE);
-        lblTotalPrice.setFont(new Font("Segoe UI", Font.BOLD, 28));
-        lblTotalPrice.setBounds(20, 325, 200, 40);
-        summaryPanel.add(lblTotalPrice);
-
-
-        // --- SAĞ PANEL: KREDİ KARTI FORMU ---
-        JLabel lblPaymentTitle = new JLabel("Kart Bilgileri");
-        lblPaymentTitle.setForeground(Color.WHITE);
-        lblPaymentTitle.setFont(new Font("Segoe UI", Font.BOLD, 22));
-        lblPaymentTitle.setBounds(360, 60, 200, 30);
-        contentPane.add(lblPaymentTitle);
-
-        // Kart Üzerindeki İsim
-        createFormLabel("Kart Sahibi Ad Soyad", 360, 110);
-        txtCardName = createTextField(360, 135, 380);
-        contentPane.add(txtCardName);
-
-        // Kart Numarası
-        createFormLabel("Kart Numarası", 360, 190);
-        txtCardNumber = createTextField(360, 215, 380);
-        // Basit bir placeholder mantığı veya maskeleme (sadece görsel)
-        txtCardNumber.setText("4444 5555 6666 7777");
-        txtCardNumber.setForeground(Color.GRAY);
-        txtCardNumber.addFocusListener(new FocusAdapter() {
-            public void focusGained(FocusEvent e) {
-                if(txtCardNumber.getText().startsWith("4444")) {
-                    txtCardNumber.setText("");
-                    txtCardNumber.setForeground(Color.WHITE);
-                }
-            }
-        });
-        contentPane.add(txtCardNumber);
-
-        // Son Kullanma ve CVV (Yan Yana)
-        createFormLabel("Son Kul. (AA/YY)", 360, 270);
-        txtExpiry = createTextField(360, 295, 170);
-        contentPane.add(txtExpiry);
-
-        createFormLabel("CVV", 570, 270);
-        txtCVV = createTextField(570, 295, 170);
-        contentPane.add(txtCVV);
-
-        // Ödeme Butonu
-        JButton btnPay = new JButton("ÖDEMEYİ TAMAMLA (" + totalAmount + " TL)");
-        btnPay.setBounds(360, 370, 380, 50);
-        btnPay.setBackground(COLOR_ACCENT);
-        btnPay.setForeground(Color.WHITE);
-        btnPay.setFont(new Font("Segoe UI", Font.BOLD, 16));
-        btnPay.setFocusPainted(false);
-        btnPay.setBorderPainted(false);
-        btnPay.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-
-        btnPay.addActionListener(e -> processPayment());
-
-        contentPane.add(btnPay);
+        initHeader();
+        initSummaryPanel();
+        initPaymentForm();
     }
 
-    // --- YARDIMCI METOTLAR ---
-
-    // Ödeme İşlemi Simülasyonu
-    private void processPayment() {
-        // Basit validasyon
-        if (txtCardName.getText().isEmpty() || txtCVV.getText().isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Lütfen tüm alanları doldurun!", "Eksik Bilgi", JOptionPane.WARNING_MESSAGE);
-            return;
-        }
-
-        // Ödeme yapılıyormuş gibi hissettirmek için Timer kullanımı
-        Timer timer = new Timer(1500, new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                JOptionPane.showMessageDialog(null, "Ödeme Başarılı!\nBiletiniz oluşturuldu.\nİyi seyirler dileriz.");
-                System.exit(0); // Veya ana menüye dön
-            }
-        });
-
-        // Kullanıcıya bilgi verip butonu pasif yap
-        JOptionPane.showMessageDialog(this, "Banka ile iletişim kuruluyor, lütfen bekleyin...", "İşlem Sürüyor", JOptionPane.INFORMATION_MESSAGE);
-        timer.setRepeats(false);
-        timer.start();
-    }
-
-    private void addSummaryLabel(JPanel panel, String text, int y, boolean isTitle) {
-        JLabel lbl = new JLabel(text);
-        if (isTitle) {
-            lbl.setForeground(COLOR_TEXT_MUTED);
-            lbl.setFont(new Font("Segoe UI", Font.BOLD, 12));
-        } else {
-            lbl.setForeground(Color.WHITE);
-            lbl.setFont(new Font("Segoe UI", Font.PLAIN, 15));
-        }
-        lbl.setBounds(20, y, 260, 20);
-        panel.add(lbl);
-    }
-
-    private void createFormLabel(String text, int x, int y) {
-        JLabel lbl = new JLabel(text);
-        lbl.setForeground(COLOR_TEXT_MUTED);
-        lbl.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        lbl.setBounds(x, y, 200, 20);
-        contentPane.add(lbl);
-    }
-
-    private JTextField createTextField(int x, int y, int width) {
-        JTextField field = new JTextField();
-        field.setBounds(x, y, width, 35);
-        field.setBackground(COLOR_BG);
-        field.setForeground(Color.WHITE);
-        field.setCaretColor(COLOR_ACCENT);
-        field.setFont(new Font("Segoe UI", Font.PLAIN, 15));
-        field.setBorder(new MatteBorder(0, 0, 2, 0, Color.GRAY));
-
-        field.addFocusListener(new FocusAdapter() {
-            @Override
-            public void focusGained(FocusEvent e) {
-                field.setBorder(new MatteBorder(0, 0, 2, 0, COLOR_ACCENT));
-            }
-            @Override
-            public void focusLost(FocusEvent e) {
-                field.setBorder(new MatteBorder(0, 0, 2, 0, Color.GRAY));
-            }
-        });
-        return field;
-    }
-
-    private void createHeader() {
-        JPanel header = new JPanel();
-        header.setBounds(0,0,800,40);
+    private void initHeader() {
+        JPanel header = new JPanel(null);
+        header.setBounds(0, 0, 850, 60);
         header.setBackground(COLOR_BG);
-        header.setLayout(null);
         contentPane.add(header);
 
-        JLabel close = new JLabel("X");
-        close.setForeground(Color.WHITE);
-        close.setFont(new Font("Segoe UI", Font.BOLD, 18));
-        close.setBounds(760, 0, 40, 40);
-        close.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        close.addMouseListener(new MouseAdapter() {
-            public void mouseClicked(MouseEvent e) { dispose(); }
-        });
-        header.add(close);
+        JLabel logo = new JLabel("SİNEMA");
+        logo.setForeground(COLOR_ACCENT);
+        logo.setFont(new Font("Segoe UI Black", Font.BOLD, 22));
+        logo.setBounds(30, 15, 150, 30);
+        header.add(logo);
 
-        // Sürükleme
+        // Pencere Kontrolleri
+        JButton btnMin = new JButton("_");
+        btnMin.setBounds(750, 15, 40, 35);
+        btnMin.setFont(new Font("Segoe UI Black", Font.BOLD, 22));
+        styleControlBtn(btnMin, Color.WHITE);
+        btnMin.addActionListener(e -> setState(JFrame.ICONIFIED));
+        header.add(btnMin);
+
+        JButton btnClose = new JButton("X");
+        btnClose.setBounds(795, 15, 40, 35);
+        btnClose.setFont(new Font("Segoe UI Black", Font.BOLD, 18));
+        styleControlBtn(btnClose, COLOR_ACCENT);
+        btnClose.addActionListener(e -> dispose());
+        header.add(btnClose);
+
         header.addMouseListener(new MouseAdapter() {
             public void mousePressed(MouseEvent e) { mouseX = e.getX(); mouseY = e.getY(); }
         });
         header.addMouseMotionListener(new MouseMotionAdapter() {
             public void mouseDragged(MouseEvent e) { setLocation(getX() + e.getX() - mouseX, getY() + e.getY() - mouseY); }
+        });
+    }
+
+    private void initSummaryPanel() {
+        JPanel summaryCard = new JPanel(null) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(COLOR_CARD);
+                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 25, 25);
+                g2.dispose();
+            }
+        };
+        summaryCard.setBounds(30, 80, 320, 440);
+        summaryCard.setOpaque(false);
+        contentPane.add(summaryCard);
+
+        JLabel title = new JLabel("SİPARİŞ ÖZETİ");
+        title.setForeground(COLOR_ACCENT);
+        title.setFont(new Font("Segoe UI Black", Font.BOLD, 20));
+        title.setBounds(30, 30, 250, 30);
+        summaryCard.add(title);
+
+        addInfo(summaryCard, "FİLM", movieTitle.toUpperCase(), 80);
+        addInfo(summaryCard, "SEANS", selectedSession, 150);
+        addInfo(summaryCard, "KOLTUKLAR", String.join(", ", selectedSeats), 220);
+
+        double total = selectedSeats.size() * TICKET_PRICE;
+        JLabel lblTotalT = new JLabel("TOPLAM TUTAR");
+        lblTotalT.setForeground(COLOR_TEXT_SUB);
+        lblTotalT.setFont(new Font("Segoe UI Bold", Font.PLAIN, 12));
+        lblTotalT.setBounds(30, 330, 200, 20);
+        summaryCard.add(lblTotalT);
+
+        JLabel lblPrice = new JLabel(String.format("%.2f TL", total));
+        lblPrice.setForeground(Color.WHITE);
+        lblPrice.setFont(new Font("Segoe UI Black", Font.BOLD, 32));
+        lblPrice.setBounds(30, 355, 260, 45);
+        summaryCard.add(lblPrice);
+    }
+
+    private void initPaymentForm() {
+        int startX = 390;
+        int fieldW = 410;
+
+        JLabel lblTitle = new JLabel("KART BİLGİLERİ");
+        lblTitle.setForeground(Color.WHITE);
+        lblTitle.setFont(new Font("Segoe UI Black", Font.BOLD, 22));
+        lblTitle.setBounds(startX, 85, 300, 30);
+        contentPane.add(lblTitle);
+
+        txtCardName = addLabeledField("KART SAHİBİ", startX, 140, fieldW);
+        txtCardNumber = addLabeledField("KART NUMARASI", startX, 215, fieldW);
+        txtExpiry = addLabeledField("AA / YY", startX, 290, 195);
+        txtCVV = addLabeledField("CVV", startX + 215, 290, 195);
+
+        JButton btnPay = new JButton("ÖDEMEYİ TAMAMLA →");
+        btnPay.setBounds(startX, 400, fieldW, 55);
+        btnPay.setBackground(COLOR_ACCENT);
+        btnPay.setForeground(Color.WHITE);
+        btnPay.setFont(new Font("Segoe UI Black", Font.BOLD, 16));
+        btnPay.setFocusPainted(false);
+        btnPay.setBorderPainted(false);
+        btnPay.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        btnPay.addActionListener(e -> handlePayment());
+        contentPane.add(btnPay);
+
+        JLabel lblSecurity = new JLabel("🔒 Güvenli Ödeme Altyapısı");
+        lblSecurity.setForeground(COLOR_TEXT_SUB);
+        lblSecurity.setFont(new Font("Segoe UI Semibold", Font.PLAIN, 11));
+        lblSecurity.setBounds(startX, 465, 410, 20);
+        lblSecurity.setHorizontalAlignment(SwingConstants.CENTER);
+        contentPane.add(lblSecurity);
+    }
+
+    private void handlePayment() {
+        if (txtCardNumber.getText().isEmpty() || txtCVV.getText().isEmpty() || txtCardName.getText().isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Lütfen kart bilgilerini eksiksiz girin.", "Uyarı", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        try {
+            User loggedInUser = authService.getCurrentUser();
+            Customer buyer;
+
+            if (loggedInUser instanceof Cashier) {
+                User target = authService.getUser(targetCustomerEmail);
+                if (!(target instanceof Customer)) throw new Exception("Müşteri bulunamadı!");
+                buyer = (Customer) target;
+            } else {
+                buyer = (Customer) loggedInUser;
+            }
+
+            // Bilet Kayıt
+            for (String seatCode : selectedSeats) {
+                if (loggedInUser instanceof Cashier) {
+                    ticketService.buyTicket(selectedSession, buyer, seatCode, (Cashier) loggedInUser);
+                } else {
+                    ticketService.buyTicket(selectedSession, buyer, seatCode);
+                }
+            }
+
+            JOptionPane.showMessageDialog(this, "Ödeme onaylandı! Biletleriniz profilinize eklendi.", "Başarılı", JOptionPane.INFORMATION_MESSAGE);
+
+            // Direkt Profil ekranına yönlendir
+            dispose();
+            ProfileFrame pf = new ProfileFrame(authService, ticketService);
+            pf.showTicketsTab(); // Biletler sekmesini açan metodun ProfileFrame'de olması gerekir
+            pf.setVisible(true);
+
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Hata: " + ex.getMessage());
+        }
+    }
+
+    private JTextField addLabeledField(String label, int x, int y, int w) {
+        JLabel lbl = new JLabel(label);
+        lbl.setForeground(COLOR_ACCENT);
+        lbl.setFont(new Font("Segoe UI Bold", Font.PLAIN, 11));
+        lbl.setBounds(x, y, w, 20);
+        contentPane.add(lbl);
+
+        JTextField tf = new JTextField();
+        tf.setBounds(x, y + 22, w, 40);
+        tf.setBackground(COLOR_CARD);
+        tf.setForeground(Color.WHITE);
+        tf.setCaretColor(COLOR_ACCENT);
+        tf.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        tf.setBorder(BorderFactory.createCompoundBorder(new LineBorder(COLOR_BORDER, 1, true), new EmptyBorder(0, 10, 0, 10)));
+        contentPane.add(tf);
+        return tf;
+    }
+
+    private void addInfo(JPanel p, String title, String value, int y) {
+        JLabel t = new JLabel(title);
+        t.setForeground(COLOR_TEXT_SUB);
+        t.setFont(new Font("Segoe UI Bold", Font.PLAIN, 11));
+        t.setBounds(30, y, 260, 20);
+        p.add(t);
+
+        JLabel v = new JLabel(value);
+        v.setForeground(Color.WHITE);
+        v.setFont(new Font("Segoe UI Semibold", Font.PLAIN, 14));
+        v.setBounds(30, y + 20, 260, 25);
+        p.add(v);
+    }
+
+    private void styleControlBtn(JButton btn, Color hover) {
+        btn.setContentAreaFilled(false);
+        btn.setBorderPainted(false);
+        btn.setFocusPainted(false);
+        btn.setMargin(new Insets(0, 0, 0, 0));
+        btn.setForeground(new Color(100, 100, 100));
+        btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        btn.addMouseListener(new MouseAdapter() {
+            public void mouseEntered(MouseEvent e) { btn.setForeground(hover); }
+            public void mouseExited(MouseEvent e) { btn.setForeground(new Color(100, 100, 100)); }
         });
     }
 }
