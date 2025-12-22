@@ -7,6 +7,7 @@ import cinema.model.Ticket;
 import cinema.model.content.Film;
 import cinema.model.people.Cashier;
 import cinema.model.people.Customer;
+import cinema.repository.SessionRepository;
 import cinema.repository.TicketRepository;
 
 import java.time.LocalDate;
@@ -16,9 +17,11 @@ import java.util.List;
 public class TicketService {
 
     private final TicketRepository ticketRepository;
+    private final SessionRepository sessionRepository;
 
-    public TicketService(TicketRepository ticketRepository) {
+    public TicketService(TicketRepository ticketRepository, SessionRepository sessionRepository) {
         this.ticketRepository = ticketRepository;
+        this.sessionRepository = sessionRepository;
     }
 
     // Müşterinin kendi başına yaptığı bilet alımları
@@ -39,7 +42,7 @@ public class TicketService {
 
     // Bilet oluşturma sürecinde yapılması gereken işlemleri (Senas kontrolü, fiyat hesaplama) yapar
     private Ticket processTicket(String sessionId, Customer customer, String seatCode) {
-        Session session = H2SessionRepository.getSession(sessionId);
+        Session session = sessionRepository.getSession(sessionId);
 
         if (session == null) {
             throw new RuntimeException("Seans bulunamadı! ID: " + sessionId);

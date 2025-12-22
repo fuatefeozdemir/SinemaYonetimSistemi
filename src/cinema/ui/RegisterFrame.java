@@ -3,6 +3,7 @@ package cinema.ui;
 import cinema.model.people.Customer;
 import cinema.service.AuthService;
 import cinema.service.TicketService;
+import cinema.util.ServiceContainer;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -16,8 +17,7 @@ import java.util.UUID;
 
 public class RegisterFrame extends JFrame {
 
-    private final AuthService authService;
-    private final TicketService ticketService;
+    private final ServiceContainer serviceContainer;
 
     private JTextField txtFirstName, txtLastName, txtEmail, txtBirthDate;
     private JPasswordField txtPassword;
@@ -31,9 +31,8 @@ public class RegisterFrame extends JFrame {
     private final Color COLOR_TEXT_SUB = new Color(150, 150, 150);
     private final Color COLOR_BORDER = new Color(35, 35, 35);
 
-    public RegisterFrame(AuthService authService, TicketService ticketService) {
-        this.authService = authService;
-        this.ticketService = ticketService;
+    public RegisterFrame(ServiceContainer serviceContainer) {
+        this.serviceContainer = serviceContainer;
 
         setUndecorated(true);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -138,7 +137,7 @@ public class RegisterFrame extends JFrame {
         // Login ekranına döner
         lblLogin.addMouseListener(new MouseAdapter() {
             public void mouseClicked(MouseEvent e) {
-                new LoginFrame(authService, ticketService).setVisible(true);
+                new LoginFrame(serviceContainer).setVisible(true);
                 dispose();
             }
             public void mouseEntered(MouseEvent e) { lblLogin.setForeground(COLOR_ACCENT); }
@@ -207,10 +206,10 @@ public class RegisterFrame extends JFrame {
             // Yeni müşteri nesnesi oluşturur
             Customer newCustomer = new Customer(firstName, lastName, email, LocalDate.parse(birthDateStr), password);
             newCustomer.setId(UUID.randomUUID().toString());
-            authService.register(newCustomer);
+            serviceContainer.getAuthService().register(newCustomer);
 
             JOptionPane.showMessageDialog(this, "Kaydınız başarıyla tamamlandı!", "Başarılı", JOptionPane.INFORMATION_MESSAGE);
-            new LoginFrame(authService, ticketService).setVisible(true);
+            new LoginFrame(serviceContainer).setVisible(true);
             this.dispose();
 
         } catch (DateTimeParseException ex) {

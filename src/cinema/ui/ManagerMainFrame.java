@@ -3,6 +3,8 @@ package cinema.ui;
 import cinema.model.content.*;
 import cinema.model.*;
 import cinema.service.*;
+import cinema.util.ServiceContainer;
+
 import javax.swing.*;
 import javax.swing.border.LineBorder;
 import javax.swing.table.DefaultTableCellRenderer;
@@ -15,11 +17,7 @@ import java.util.List;
 public class ManagerMainFrame extends JFrame {
 
     // Servis Katmanları
-    private final AuthService authService;
-    private final MediaService mediaService;
-    private final TicketService ticketService;
-    private final HallService hallService;
-    private final SessionService sessionService;
+    private final ServiceContainer serviceContainer;
 
     // UI Bileşenleri
     private JPanel contentPane;
@@ -36,12 +34,8 @@ public class ManagerMainFrame extends JFrame {
     private final Color COLOR_TEXT_MAIN = new Color(245, 245, 245);
     private final Color COLOR_BORDER = new Color(35, 35, 35);
 
-    public ManagerMainFrame(AuthService authService, TicketService ticketService) {
-        this.authService = authService;
-        this.ticketService = ticketService;
-        this.mediaService = new MediaService();
-        this.hallService = new HallService();
-        this.sessionService = new SessionService();
+    public ManagerMainFrame(ServiceContainer serviceContainer) {
+        this.serviceContainer = serviceContainer;
 
         // JTabbedPane görselindeki beyazlıkları temizlemek için global UI ayarları
         UIManager.put("TabbedPane.contentBorderInsets", new Insets(0, 0, 0, 0));
@@ -93,7 +87,7 @@ public class ManagerMainFrame extends JFrame {
         btnLogout.setBounds(900, 34, 90, 32);
         styleHeaderButton(btnLogout, COLOR_ACCENT);
         btnLogout.addActionListener(e -> {
-            new LoginFrame(authService, ticketService).setVisible(true);
+            new LoginFrame(serviceContainer).setVisible(true);
             dispose();
         });
         header.add(btnLogout);
@@ -180,7 +174,7 @@ public class ManagerMainFrame extends JFrame {
     // Veritabanındaki filmleri tabloya yansıtır
     private void loadFilms() {
         filmModel.setRowCount(0);
-        mediaService.getAllFilms().forEach(m -> {
+        serviceContainer.getMediaService().getAllFilms().forEach(m -> {
             if (m instanceof Film f) {
                 filmModel.addRow(new Object[]{f.getFilmType(), f.getName(), f.getGenre(), f.getDurationMinutes() + " dk"});
             }
@@ -190,8 +184,8 @@ public class ManagerMainFrame extends JFrame {
     // Aktif seansları tabloya yansıtır
     private void loadSessions() {
         sessionModel.setRowCount(0);
-        mediaService.getAllFilms().forEach(m -> {
-            List<Session> filmSessions = SessionService.getSessionsByMediaName(m.getName());
+        serviceContainer.getMediaService().getAllFilms().forEach(m -> {
+            List<Session> filmSessions = serviceContainer.getSessionService().getSessionsByMediaName(m.getName());
             if (filmSessions != null) {
                 filmSessions.forEach(s -> sessionModel.addRow(new Object[]{
                         s.getFilm().getName(),
@@ -209,8 +203,8 @@ public class ManagerMainFrame extends JFrame {
 
         if (tabIndex == 0) {
             String name = filmModel.getValueAt(r, 1).toString();
-            Film f = (Film) mediaService.getMediaByName(name);
-            new FilmFormDialog(this, "Düzenle", f, mediaService).setVisible(true);
+            Film f = (Film) serviceContainer.getMediaService().getMediaByName(name);
+            new FilmFormDialog(this, "Düzenle", f, serviceContainer.getMediaService()).setVisible(true);
             loadFilms();
         } else if (tabIndex == 1) {
             onDelete(1); // Mevcut seansı silip yenisini tanımlatarak güncelleme yapıyoruz
@@ -226,12 +220,12 @@ public class ManagerMainFrame extends JFrame {
         int confirm = JOptionPane.showConfirmDialog(this, "Seçili kayıt silinsin mi?", "Onay", JOptionPane.YES_NO_OPTION);
         if (confirm == JOptionPane.OK_OPTION) {
             if (tabIndex == 0) {
-                mediaService.deleteMedia(filmModel.getValueAt(r, 1).toString());
+                serviceContainer.getMediaService().deleteMedia(filmModel.getValueAt(r, 1).toString());
             } else {
                 String film = sessionModel.getValueAt(r, 0).toString();
                 String hall = sessionModel.getValueAt(r, 1).toString();
                 String time = sessionModel.getValueAt(r, 2).toString();
-                sessionService.deleteSession(film, hall, time);
+                serviceContainer.getSessionService().deleteSession(film, hall, time);
             }
             refreshAllTables();
         }
@@ -243,12 +237,12 @@ public class ManagerMainFrame extends JFrame {
     }
 
     private void onAddFilm() {
-        new FilmFormDialog(this, "Film Ekle", null, mediaService).setVisible(true);
+        new FilmFormDialog(this, "Film Ekle", null, serviceContainer.getMediaService()).setVisible(true);
         loadFilms();
     }
 
     private void onAddSession() {
-        new SessionFormDialog(this, sessionService, mediaService, hallService).setVisible(true);
+        new SessionFormDialog(this, serviceContainer).setVisible(true);
         loadSessions();
     }
 

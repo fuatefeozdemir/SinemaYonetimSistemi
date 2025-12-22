@@ -5,6 +5,7 @@ import cinema.model.content.Media;
 import cinema.service.MediaService;
 import cinema.service.HallService;
 import cinema.service.SessionService;
+import cinema.util.ServiceContainer;
 
 import javax.swing.*;
 import javax.swing.border.LineBorder;
@@ -16,9 +17,7 @@ import java.util.List;
 public class SessionFormDialog extends JDialog {
 
     // Servis Katmanları
-    private final SessionService sessionService;
-    private final MediaService mediaService;
-    private final HallService hallService;
+    private final ServiceContainer serviceContainer;
 
     // UI Bileşenleri
     private JComboBox<String> cbFilms;
@@ -32,11 +31,9 @@ public class SessionFormDialog extends JDialog {
     private final Color COLOR_TEXT = new Color(240, 240, 240);
     private final Color COLOR_BORDER = new Color(40, 40, 40);
 
-    public SessionFormDialog(Frame owner, SessionService ss, MediaService ms, HallService hs) {
+    public SessionFormDialog(Frame owner, ServiceContainer serviceContainer) {
         super(owner, "Yeni Seans Oluştur", true);
-        this.sessionService = ss;
-        this.mediaService = ms;
-        this.hallService = hs;
+        this.serviceContainer = serviceContainer;
 
         setUndecorated(true);
         setSize(400, 500);
@@ -93,12 +90,12 @@ public class SessionFormDialog extends JDialog {
     // Veritabanındaki film ve salon listelerini getirir
     private void loadData() {
         try {
-            List<Media> films = mediaService.getAllFilms();
+            List<Media> films = serviceContainer.getMediaService().getAllFilms();
             films.stream()
                     .filter(m -> m instanceof Film)
                     .forEach(f -> cbFilms.addItem(f.getName()));
 
-            List<String> hallNames = hallService.getAllHallNames();
+            List<String> hallNames = serviceContainer.getHallService().getAllHallNames();
             hallNames.forEach(cbHalls::addItem);
         } catch (Exception e) {
             System.err.println("Veri yükleme hatası: " + e.getMessage());
@@ -117,7 +114,7 @@ public class SessionFormDialog extends JDialog {
         }
 
         try {
-            sessionService.addSession(selectedFilm, selectedHall, dateTime);
+            serviceContainer.getSessionService().addSession(selectedFilm, selectedHall, dateTime);
             JOptionPane.showMessageDialog(this, "Seans başarıyla sisteme kaydedildi.");
             dispose();
         } catch (Exception e) {

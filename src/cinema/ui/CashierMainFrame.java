@@ -3,10 +3,8 @@ package cinema.ui;
 import cinema.model.Session;
 import cinema.model.content.Film;
 import cinema.model.content.Media;
-import cinema.service.AuthService;
-import cinema.service.MediaService;
-import cinema.service.SessionService;
-import cinema.service.TicketService;
+import cinema.service.*;
+import cinema.util.ServiceContainer;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -27,10 +25,7 @@ public class CashierMainFrame extends JFrame {
     private JTextField txtCustomerEmail;
 
     // Servis bağlantıları
-    private final AuthService authService;
-    private final TicketService ticketService;
-    private final MediaService mediaService;
-    private final SessionService sessionService = new SessionService();
+    private final ServiceContainer serviceContainer;
 
     // Renk değişkenleri
     private final Color COLOR_BG = new Color(10, 10, 10);
@@ -39,11 +34,8 @@ public class CashierMainFrame extends JFrame {
     private final Color COLOR_TEXT_SUB = new Color(150, 150, 150);
     private final Color COLOR_BORDER = new Color(35, 35, 35);
 
-    public CashierMainFrame(AuthService authService, TicketService ticketService) {
-        this.authService = authService;
-        this.ticketService = ticketService;
-        this.mediaService = new MediaService();
-
+    public CashierMainFrame(ServiceContainer serviceContainer) {
+        this.serviceContainer = serviceContainer;
         // Pencere ayarları
         setUndecorated(true);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -80,7 +72,7 @@ public class CashierMainFrame extends JFrame {
         header.add(lblSub);
 
         // Giriş yapan kullanıcı ismi
-        String name = (authService.getCurrentUser() != null) ? authService.getCurrentUser().getFirstName() : "Kasiyer";
+        String name = (serviceContainer.getAuthService().getCurrentUser() != null) ? serviceContainer.getAuthService().getCurrentUser().getFirstName() : "Kasiyer";
         JLabel lblName = new JLabel(name.toUpperCase());
         lblName.setForeground(Color.WHITE);
         lblName.setFont(new Font("Segoe UI Semibold", Font.PLAIN, 14));
@@ -91,15 +83,15 @@ public class CashierMainFrame extends JFrame {
         JButton btnProfile = new JButton("PROFİL");
         btnProfile.setBounds(660, 34, 90, 32);
         styleHeaderButton(btnProfile, Color.WHITE);
-        btnProfile.addActionListener(e -> new ProfileFrame(authService, ticketService).setVisible(true));
+        btnProfile.addActionListener(e -> new ProfileFrame(serviceContainer).setVisible(true));
         header.add(btnProfile);
 
         JButton btnLogout = new JButton("ÇIKIŞ");
         btnLogout.setBounds(760, 34, 90, 32);
         styleHeaderButton(btnLogout, COLOR_ACCENT);
         btnLogout.addActionListener(e -> {
-            authService.logout();
-            new LoginFrame(authService, ticketService).setVisible(true);
+            serviceContainer.getAuthService().logout();
+            new LoginFrame(serviceContainer).setVisible(true);
             dispose();
         });
         header.add(btnLogout);
@@ -186,7 +178,7 @@ public class CashierMainFrame extends JFrame {
                 JOptionPane.showMessageDialog(this, "Lütfen tüm alanları doldurun!", "Hata", JOptionPane.WARNING_MESSAGE);
                 return;
             }
-            new SeatSelectionFrame(movie, session, email, authService, ticketService).setVisible(true);
+            new SeatSelectionFrame(movie, session, email, serviceContainer).setVisible(true);
         });
         formCard.add(btnSell);
     }
@@ -245,7 +237,7 @@ public class CashierMainFrame extends JFrame {
     private void refreshFilms() {
         cmbFilm.removeAllItems();
         try {
-            List<Media> mediaList = mediaService.getAllFilms();
+            List<Media> mediaList = serviceContainer.getMediaService().getAllFilms();
             for (Media m : mediaList) {
                 if (m instanceof Film f) cmbFilm.addItem(f.getName());
             }
@@ -258,7 +250,7 @@ public class CashierMainFrame extends JFrame {
         String selectedFilm = (String) cmbFilm.getSelectedItem();
         if (selectedFilm == null) return;
 
-        List<Session> dbSessions = sessionService.getSessionsByMediaName(selectedFilm);
+        List<Session> dbSessions = serviceContainer.getSessionService().getSessionsByMediaName(selectedFilm);
 
         if (dbSessions.isEmpty()) {
             cmbSession.addItem("Bu film için aktif seans yok");

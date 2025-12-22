@@ -7,6 +7,9 @@ import cinema.model.Session;
 import cinema.model.Hall;
 import cinema.model.content.Media;
 import cinema.model.content.Film;
+import cinema.repository.HallRepository;
+import cinema.repository.MediaRepository;
+import cinema.repository.SessionRepository;
 
 import java.sql.*;
 import java.time.LocalDateTime;
@@ -18,14 +21,23 @@ import java.util.UUID;
 
 public class SessionService {
 
+    private final SessionRepository sessionRepository;
+    private final HallRepository hallRepository;
+    private final MediaRepository mediaRepository;
     // Veritabanı bağlantı adresi ve tarih formatı standardı
     private static final String URL = "jdbc:h2:./data/CINEMA_DB;AUTO_SERVER=TRUE;DB_CLOSE_DELAY=-1";
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
 
+    public SessionService(SessionRepository sessionRepository, HallRepository hallRepository, MediaRepository mediaRepository) {
+        this.sessionRepository = sessionRepository;
+        this.hallRepository = hallRepository;
+        this.mediaRepository = mediaRepository;
+    }
+
     // Yeni seans ekleme
-    public static void addSession(String mediaName, String hallName, String dateTimeStr) throws Exception {
-        Media media = H2MediaRepository.getMedia(mediaName);
-        Hall hall = H2HallRepository.getHall(hallName);
+    public void addSession(String mediaName, String hallName, String dateTimeStr) throws Exception {
+        Media media = mediaRepository.getMedia(mediaName);
+        Hall hall = hallRepository.getHall(hallName);
 
         if (media == null || hall == null) {
             throw new Exception("Film veya Salon bulunamadı!");
@@ -43,19 +55,19 @@ public class SessionService {
         String sessionId = UUID.randomUUID().toString().substring(0, 8);
 
         Session session = new Session(sessionId, hall, media, startTime, endTime);
-        H2SessionRepository.saveSession(session);
+        sessionRepository.saveSession(session);
     }
 
     // IDsi verilen seansı veritabanından getirir
-    public static Session getSession(String sessionId) {
+    public Session getSession(String sessionId) {
         if (sessionId == null || sessionId.isEmpty()) {
             return null;
         }
-        return H2SessionRepository.getSession(sessionId);
+        return sessionRepository.getSession(sessionId);
     }
 
     // Bir filme ait tüm seansları liste olarak döndürür
-    public static List<Session> getSessionsByMediaName(String mediaName) {
+    public List<Session> getSessionsByMediaName(String mediaName) {
         List<Session> sessions = new ArrayList<>();
         String sql = "SELECT * FROM sessions WHERE media_name = ?";
 
@@ -66,8 +78,8 @@ public class SessionService {
             ResultSet rs = pstmt.executeQuery();
 
             while (rs.next()) {
-                Hall hall = H2HallRepository.getHall(rs.getString("hall_name"));
-                Media media = H2MediaRepository.getMedia(rs.getString("media_name"));
+                Hall hall = hallRepository.getHall(rs.getString("hall_name"));
+                Media media = mediaRepository.getMedia(rs.getString("media_name"));
 
                 Session session = new Session(
                         rs.getString("session_id"),
@@ -86,6 +98,6 @@ public class SessionService {
 
     // Seansı siler
     public void deleteSession(String film, String hall, String start) {
-        H2SessionRepository.deleteSession(film, hall, start);
+        sessionRepository.deleteSession(film, hall, start);
     }
 }

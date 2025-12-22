@@ -1,4 +1,4 @@
-package cinema.service;
+package cinema.model.content;
 
 // Ücretlendirilebilir tüm içerikler için ortak fiyatlandırma kurallarını belirleyen arayüz.
 

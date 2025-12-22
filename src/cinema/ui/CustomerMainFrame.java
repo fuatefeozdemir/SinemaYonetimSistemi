@@ -4,9 +4,8 @@ import cinema.model.content.Media;
 import cinema.model.content.Film;
 import cinema.model.Session;
 import cinema.service.AuthService;
-import cinema.service.MediaService;
 import cinema.service.SessionService;
-import cinema.service.TicketService;
+import cinema.util.ServiceContainer;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -24,9 +23,7 @@ import java.util.stream.Collectors;
 public class CustomerMainFrame extends JFrame {
 
     // Servis bağlantıları
-    private final AuthService authService;
-    private final TicketService ticketService;
-    private final MediaService mediaService;
+    private final ServiceContainer serviceContainer;
     private List<Media> allMovies = new ArrayList<>();
 
     private JPanel contentPane;
@@ -45,10 +42,8 @@ public class CustomerMainFrame extends JFrame {
     private final Color COLOR_TEXT_MAIN = new Color(245, 245, 245);
     private final Color COLOR_TEXT_SUB = new Color(150, 150, 150);
 
-    public CustomerMainFrame(AuthService authService, TicketService ticketService) {
-        this.authService = authService;
-        this.ticketService = ticketService;
-        this.mediaService = new MediaService();
+    public CustomerMainFrame(ServiceContainer serviceContainer) {
+        this.serviceContainer = serviceContainer;
 
         // Pencere ayarları
         setUndecorated(true);
@@ -121,7 +116,7 @@ public class CustomerMainFrame extends JFrame {
         header.add(txtSearch);
 
         // Kullanıcı adı
-        String userName = (authService.getCurrentUser() != null) ? authService.getCurrentUser().getFirstName() : "Misafir";
+        String userName = (serviceContainer.getAuthService().getCurrentUser() != null) ? serviceContainer.getAuthService().getCurrentUser().getFirstName() : "Misafir";
         JLabel lblName = new JLabel(userName.toUpperCase());
         lblName.setForeground(Color.WHITE);
         lblName.setFont(new Font("Segoe UI Semibold", Font.PLAIN, 14));
@@ -133,7 +128,7 @@ public class CustomerMainFrame extends JFrame {
         JButton btnProfile = new JButton("PROFİL");
         btnProfile.setBounds(840, 34, 90, 32);
         styleHeaderButton(btnProfile, Color.WHITE);
-        btnProfile.addActionListener(e -> new ProfileFrame(authService, ticketService).setVisible(true));
+        btnProfile.addActionListener(e -> new ProfileFrame(serviceContainer).setVisible(true));
         header.add(btnProfile);
 
         // Çıkış butonu
@@ -141,8 +136,8 @@ public class CustomerMainFrame extends JFrame {
         btnLogout.setBounds(940, 34, 90, 32);
         styleHeaderButton(btnLogout, COLOR_ACCENT);
         btnLogout.addActionListener(e -> {
-            authService.logout();
-            new LoginFrame(authService, ticketService).setVisible(true);
+            serviceContainer.getAuthService().logout();
+            new LoginFrame(serviceContainer).setVisible(true);
             dispose();
         });
         header.add(btnLogout);
@@ -199,7 +194,7 @@ public class CustomerMainFrame extends JFrame {
     // Filmleri veritabanından çeker
     private void loadMoviesFromDatabase() {
         try {
-            allMovies = mediaService.getAllFilms();
+            allMovies = serviceContainer.getMediaService().getAllFilms();
             displayMovies(allMovies);
         } catch (Exception e) { e.printStackTrace(); }
     }
@@ -296,7 +291,7 @@ public class CustomerMainFrame extends JFrame {
         sessionContainer.setOpaque(false);
         sessionContainer.setBounds(20, 440, 280, 140);
 
-        List<Session> sessions = SessionService.getSessionsByMediaName(film.getName());
+        List<Session> sessions = serviceContainer.getSessionService().getSessionsByMediaName(film.getName());
         DateTimeFormatter dtf = DateTimeFormatter.ofPattern("HH:mm");
 
         for (Session s : sessions) {
@@ -307,7 +302,7 @@ public class CustomerMainFrame extends JFrame {
             b.setFont(new Font("Segoe UI Semibold", Font.PLAIN, 11));
             b.setBorder(new LineBorder(new Color(60, 60, 60), 1, true));
             b.setCursor(new Cursor(Cursor.HAND_CURSOR));
-            b.addActionListener(e -> new SeatSelectionFrame(film.getName(), authService, ticketService).setVisible(true));
+            b.addActionListener(e -> new SeatSelectionFrame(film.getName(), serviceContainer).setVisible(true));
             sessionContainer.add(b);
         }
         card.add(sessionContainer);

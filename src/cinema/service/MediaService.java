@@ -1,35 +1,40 @@
 package cinema.service;
 
-import cinema.H2.H2MediaRepository;
-import cinema.H2.H2SessionRepository;
-import cinema.model.Session;
 import cinema.model.content.Media;
+import cinema.repository.MediaRepository;
+
 import java.util.List;
 
 public class MediaService {
 
+    private final MediaRepository mediaRepository;
+
+    public MediaService(MediaRepository mediaRepository) {
+        this.mediaRepository = mediaRepository;
+    }
+
     // Veritabanındaki tüm medyaları liste olarak getirir
     public List<Media> getAllFilms() {
-        return H2MediaRepository.getAllFilm();
+        return mediaRepository.getAllFilm();
     }
 
     // Yeni bir medyayı kaydeder
     public void addMedia(Media media) {
-        H2MediaRepository.saveMedia(media);
+        mediaRepository.saveMedia(media);
     }
 
     // Medya bilgilerini günceller
     public void updateMedia(Media media) {
-        H2MediaRepository.updateMedia(media);
+        mediaRepository.updateMedia(media);
     }
 
     // Medyayı siler
     public void deleteMedia(String name) {
-        H2MediaRepository.deleteMedia(name);
+        mediaRepository.deleteMedia(name);
     }
 
     // Medyayı getirir
     public Media getMediaByName(String name) {
-        return H2MediaRepository.getMedia(name);
+        return mediaRepository.getMedia(name);
     }
 }

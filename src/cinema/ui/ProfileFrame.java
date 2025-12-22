@@ -7,6 +7,7 @@ import cinema.model.people.User;
 import cinema.service.AuthService;
 import cinema.service.TicketService;
 import cinema.service.SessionService;
+import cinema.util.ServiceContainer;
 import cinema.util.TicketPrinter;
 
 import javax.swing.*;
@@ -22,8 +23,7 @@ import java.util.List;
 
 public class ProfileFrame extends JFrame {
 
-    private final AuthService authService;
-    private final TicketService ticketService;
+    private final ServiceContainer serviceContainer;
 
     // UI Bileşenleri
     private JPanel contentPane;
@@ -43,9 +43,8 @@ public class ProfileFrame extends JFrame {
     private final Color COLOR_TEXT_SUB = new Color(150, 150, 150);
     private final Color COLOR_BORDER = new Color(35, 35, 35);
 
-    public ProfileFrame(AuthService authService, TicketService ticketService) {
-        this.authService = authService;
-        this.ticketService = ticketService;
+    public ProfileFrame(ServiceContainer serviceContainer) {
+        this.serviceContainer = serviceContainer;
 
         setUndecorated(true);
         setSize(550, 780);
@@ -117,7 +116,7 @@ public class ProfileFrame extends JFrame {
         });
 
         navPanel.add(btnInfo);
-        if (authService.getCurrentUser() instanceof Customer) {
+        if (serviceContainer.getAuthService().getCurrentUser() instanceof Customer) {
             navPanel.add(btnTickets);
         }
         contentPane.add(navPanel, BorderLayout.CENTER);
@@ -138,7 +137,7 @@ public class ProfileFrame extends JFrame {
 
     // Kullanıcının kendi bilgilerini değiştirebildiği panel
     private JPanel createProfilePanel() {
-        User user = authService.getCurrentUser();
+        User user = serviceContainer.getAuthService().getCurrentUser();
         JPanel panel = new JPanel(null);
         panel.setBackground(COLOR_BG);
 
@@ -198,8 +197,8 @@ public class ProfileFrame extends JFrame {
         ticketListContainer.setLayout(new BoxLayout(ticketListContainer, BoxLayout.Y_AXIS));
         ticketListContainer.setBackground(COLOR_BG);
 
-        String currentEmail = authService.getCurrentUser().getEmail();
-        List<Ticket> myTickets = ticketService.getMyTickets(currentEmail);
+        String currentEmail = serviceContainer.getAuthService().getCurrentUser().getEmail();
+        List<Ticket> myTickets = serviceContainer.getTicketService().getMyTickets(currentEmail);
 
         if (myTickets == null || myTickets.isEmpty()) {
             JLabel lblEmpty = new JLabel("🎟️ Henüz satın alınmış bir biletiniz bulunmuyor.", SwingConstants.CENTER);
@@ -227,7 +226,7 @@ public class ProfileFrame extends JFrame {
 
     // Biletler için kart oluşturur
     private JPanel createTicketCard(Ticket t) {
-        Session session = SessionService.getSession(t.getSession());
+        Session session = serviceContainer.getSessionService().getSession(t.getSession());
         String filmName = (session != null) ? session.getFilm().getName() : "Bilinmeyen Film";
         String sessionTime = (session != null) ? session.getStartTime().format(DateTimeFormatter.ofPattern("HH:mm")) : "--:--";
         String hallName = (session != null) ? session.getHall().getHallName() : "Salon -";
@@ -296,7 +295,7 @@ public class ProfileFrame extends JFrame {
     private void handleTicketRefund(Ticket t) {
         int choice = JOptionPane.showConfirmDialog(this, "Bileti iade etmek istediğinize emin misiniz?", "BİLET İADE", JOptionPane.YES_NO_OPTION);
         if (choice == JOptionPane.YES_OPTION) {
-            if (ticketService.refundTicket(t.getTicketId())) {
+            if (serviceContainer.getTicketService().refundTicket(t.getTicketId())) {
                 JOptionPane.showMessageDialog(this, "Bilet iade edildi.");
                 refreshTickets();
             }
@@ -312,14 +311,14 @@ public class ProfileFrame extends JFrame {
 
     private void handleUpdate() {
         try {
-            User user = authService.getCurrentUser();
+            User user = serviceContainer.getAuthService().getCurrentUser();
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy");
             user.setFirstName(txtFirstName.getText().trim());
             user.setLastName(txtLastName.getText().trim());
             user.setDateOfBirth(LocalDate.parse(txtBirthDate.getText().trim(), formatter));
             user.setPassword(new String(txtPassword.getPassword()));
 
-            authService.updateUser(user);
+            serviceContainer.getAuthService().updateUser(user);
             JOptionPane.showMessageDialog(this, "Profiliniz başarıyla güncellendi.");
         } catch (DateTimeParseException e) {
             JOptionPane.showMessageDialog(this, "Hata: Tarih formatı GG.AA.YYYY olmalıdır.");
@@ -330,7 +329,7 @@ public class ProfileFrame extends JFrame {
 
     private void handleDeleteAccount() {
         if (JOptionPane.showConfirmDialog(this, "Hesabınızı silmek üzeresiniz. Bu işlem geri alınamaz!", "DİKKAT", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
-            authService.deleteUser();
+            serviceContainer.getAuthService().deleteUser();
             System.exit(0);
         }
     }

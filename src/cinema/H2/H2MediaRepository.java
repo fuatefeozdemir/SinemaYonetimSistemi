@@ -2,6 +2,7 @@ package cinema.H2;
 
 
 import cinema.model.content.*;
+import cinema.repository.MediaRepository;
 
 import java.sql.*;
 import java.time.LocalDate;
@@ -9,7 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-public class H2MediaRepository {
+public class H2MediaRepository implements MediaRepository {
     static final String URL = "jdbc:h2:./data/CINEMA_DB;AUTO_SERVER=TRUE;DB_CLOSE_DELAY=-1";
 
     // Kontrol edilecek metinler için değişkenler
@@ -21,7 +22,7 @@ public class H2MediaRepository {
     private static final String PREMIUM = "Premium";
     private static final String ANIMATION = "Animation";
 
-    public static void initialize() {
+    public void initialize() {
         try (Connection conn = DriverManager.getConnection(URL);
              Statement stmt = conn.createStatement()) {
 
@@ -65,7 +66,8 @@ public class H2MediaRepository {
         }
     }
 
-    public static void saveMedia(Media media) {
+    @Override
+    public void saveMedia(Media media) {
         String mediaSql = "INSERT INTO media (id, name, duration_minutes, is_visible, media_type) VALUES (?, ?, ?, ?, ?)";
 
         try (Connection conn = DriverManager.getConnection(URL)) {
@@ -117,7 +119,8 @@ public class H2MediaRepository {
         }
     }
 
-    public static void updateMedia(Media media) {
+    @Override
+    public void updateMedia(Media media) {
 
         String mediaUpdateSql = "UPDATE media SET duration_minutes = ?, is_visible = ? WHERE name = ?";
 
@@ -182,7 +185,8 @@ public class H2MediaRepository {
         }
     }
 
-    public static void deleteMedia(String name) {
+    @Override
+    public void deleteMedia(String name) {
         String sql = "DELETE FROM media WHERE name = ?";
         try (Connection conn = DriverManager.getConnection(URL);
              var pstmt = conn.prepareStatement(sql)) {
@@ -193,8 +197,8 @@ public class H2MediaRepository {
         }
     }
 
-
-    public static Media getMedia(String name) {
+    @Override
+    public Media getMedia(String name) {
         String sql = "SELECT * FROM media WHERE name = ?";
 
         try (Connection conn = DriverManager.getConnection(URL);
@@ -222,7 +226,7 @@ public class H2MediaRepository {
         return null;
     }
 
-    private static Film getFilmDetails(Connection conn, String id, String name, int duration, boolean visible) {
+    private Film getFilmDetails(Connection conn, String id, String name, int duration, boolean visible) {
         String sql = "SELECT * FROM films WHERE media_id = ?";
         try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, id);
@@ -268,7 +272,7 @@ public class H2MediaRepository {
         return null;
     }
 
-    private static Advertisement getAdvertisementDetails(Connection conn, String id, String name, int duration, boolean visible) {
+    private Advertisement getAdvertisementDetails(Connection conn, String id, String name, int duration, boolean visible) {
         String sql = "SELECT company FROM advertisements WHERE media_id = ?";
         try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, id);
@@ -282,7 +286,7 @@ public class H2MediaRepository {
         return null;
     }
 
-    private static Trailer getTrailerDetails(Connection conn, String id, String name, int duration, boolean visible){
+    private Trailer getTrailerDetails(Connection conn, String id, String name, int duration, boolean visible) {
         String sql = "SELECT film_name FROM trailers WHERE media_id = ?";
         try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, id);
@@ -296,7 +300,9 @@ public class H2MediaRepository {
         }
         return null;
     }
-    public static List<Media> getAllFilm() {
+
+    @Override
+    public List<Media> getAllFilm() {
         List<Media> mediaList = new ArrayList<>();
         String sql = "SELECT m.id, m.name, m.duration_minutes, m.is_visible, m.media_type, " +
                 "f.release_date, f.director, f.age_restriction, f.genre, " +
@@ -337,8 +343,7 @@ public class H2MediaRepository {
                     } else {
                         media = new Standard2D(name, duration, isVisible, releaseDate, director, ageRestriction, genre, language, imdbRating);
                     }
-                }
-                else if (TRAILER.equalsIgnoreCase(mediaType)) {
+                } else if (TRAILER.equalsIgnoreCase(mediaType)) {
                     media = new Trailer(name, duration, isVisible, "Fragman");
                 }
 
