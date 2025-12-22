@@ -47,9 +47,11 @@ public class ProfileFrame extends JFrame {
         this.serviceContainer = serviceContainer;
 
         setUndecorated(true);
-        setSize(550, 780);
+        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        // Ekran yüksekliği sığması için 780'den 660'a düşürüldü
+        setSize(550, 660);
         setLocationRelativeTo(null);
-        setShape(new RoundRectangle2D.Double(0, 0, 550, 780, 30, 30));
+        setShape(new RoundRectangle2D.Double(0, 0, 550, 660, 30, 30));
 
         contentPane = new JPanel(new BorderLayout());
         contentPane.setBackground(COLOR_BG);
@@ -73,14 +75,18 @@ public class ProfileFrame extends JFrame {
         title.setBounds(30, 20, 250, 30);
         header.add(title);
 
-        JButton btnMin = new JButton("_");
-        btnMin.setBounds(460, 15, 35, 35);
+        // Alta alma butonu - Sembol ve konum düzeltildi
+        JButton btnMin = new JButton("—");
+        btnMin.setBounds(455, 15, 35, 35);
+        btnMin.setFont(new Font("Segoe UI", Font.BOLD, 18));
         styleControlBtn(btnMin, Color.WHITE);
         btnMin.addActionListener(e -> setState(JFrame.ICONIFIED));
         header.add(btnMin);
 
-        JButton btnClose = new JButton("X");
-        btnClose.setBounds(500, 15, 35, 35);
+        // Kapatma butonu - Sembol ve konum düzeltildi
+        JButton btnClose = new JButton("✕");
+        btnClose.setBounds(495, 15, 35, 35);
+        btnClose.setFont(new Font("Segoe UI", Font.PLAIN, 18));
         styleControlBtn(btnClose, COLOR_ACCENT);
         btnClose.addActionListener(e -> dispose());
         header.add(btnClose);
@@ -132,7 +138,8 @@ public class ProfileFrame extends JFrame {
         mainContentPanel.add(createTicketsPanel(), "TICKETS");
 
         contentPane.add(mainContentPanel, BorderLayout.SOUTH);
-        mainContentPanel.setPreferredSize(new Dimension(550, 660));
+        // Panel yüksekliği yeni ekran boyutuna göre ayarlandı
+        mainContentPanel.setPreferredSize(new Dimension(550, 540));
     }
 
     // Kullanıcının kendi bilgilerini değiştirebildiği panel
@@ -142,13 +149,14 @@ public class ProfileFrame extends JFrame {
         panel.setBackground(COLOR_BG);
 
         JLabel lblAvatar = new JLabel("👤", SwingConstants.CENTER);
-        lblAvatar.setFont(new Font("Segoe UI Symbol", Font.PLAIN, 60));
+        lblAvatar.setFont(new Font("Segoe UI Symbol", Font.PLAIN, 50));
         lblAvatar.setForeground(COLOR_ACCENT);
-        lblAvatar.setBounds(225, 10, 100, 100);
+        lblAvatar.setBounds(225, 5, 100, 80);
         panel.add(lblAvatar);
 
-        int startY = 110;
-        int spacing = 75;
+        // Bileşen aralıkları kısaltılan ekrana göre daraltıldı
+        int startY = 85;
+        int spacing = 68;
 
         addModernField(panel, "E-POSTA (Değiştirilemez)", user.getEmail(), startY, false);
         txtFirstName = addModernField(panel, "AD", user.getFirstName(), startY + spacing, true);
@@ -164,19 +172,19 @@ public class ProfileFrame extends JFrame {
         panel.add(lblPass);
 
         txtPassword = new JPasswordField(user.getPassword());
-        txtPassword.setBounds(50, startY + (spacing * 4) + 22, 450, 42);
+        txtPassword.setBounds(50, startY + (spacing * 4) + 22, 450, 38);
         styleInput(txtPassword);
         panel.add(txtPassword);
 
         JButton btnSave = new JButton("DEĞİŞİKLİKLERİ KAYDET");
-        btnSave.setBounds(50, 540, 450, 45);
+        btnSave.setBounds(50, 460, 450, 45);
         styleMainButton(btnSave);
         btnSave.addActionListener(e -> handleUpdate());
         panel.add(btnSave);
 
         if (user instanceof Customer) {
             JButton btnDel = new JButton("Hesabı Sil");
-            btnDel.setBounds(225, 600, 100, 25);
+            btnDel.setBounds(225, 510, 100, 25);
             btnDel.setForeground(COLOR_TEXT_SUB);
             btnDel.setContentAreaFilled(false);
             btnDel.setBorder(null);
@@ -358,7 +366,7 @@ public class ProfileFrame extends JFrame {
         p.add(lbl);
 
         JTextField tf = new JTextField(value);
-        tf.setBounds(50, y + 22, 450, 42);
+        tf.setBounds(50, y + 22, 450, 38);
         tf.setEditable(editable);
         if (!editable) tf.setForeground(COLOR_TEXT_SUB);
         styleInput(tf);
@@ -385,10 +393,10 @@ public class ProfileFrame extends JFrame {
     private void styleControlBtn(JButton btn, Color hover) {
         btn.setContentAreaFilled(false);
         btn.setBorderPainted(false);
-        btn.setForeground(new Color(100, 100, 100));
+        btn.setForeground(new Color(180, 180, 180));
         btn.addMouseListener(new MouseAdapter() {
             public void mouseEntered(MouseEvent e) { btn.setForeground(hover); }
-            public void mouseExited(MouseEvent e) { btn.setForeground(new Color(100, 100, 100)); }
+            public void mouseExited(MouseEvent e) { btn.setForeground(new Color(180, 180, 180)); }
         });
     }
 

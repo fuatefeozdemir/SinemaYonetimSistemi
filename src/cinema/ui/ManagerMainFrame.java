@@ -47,9 +47,9 @@ public class ManagerMainFrame extends JFrame {
 
         // Pencere geometrisi
         setUndecorated(true);
-        setSize(1150, 750);
+        setSize(1100, 700);
         setLocationRelativeTo(null);
-        setShape(new RoundRectangle2D.Double(0, 0, 1150, 750, 30, 30));
+        setShape(new RoundRectangle2D.Double(0, 0, 1100, 700, 30, 30));
 
         contentPane = new JPanel(new BorderLayout());
         contentPane.setBackground(COLOR_BG);
@@ -66,7 +66,7 @@ public class ManagerMainFrame extends JFrame {
     // Logo, Başlık ve Çıkış butonunu içeren üst bar
     private void initHeader() {
         JPanel header = new JPanel(null);
-        header.setPreferredSize(new Dimension(1150, 90));
+        header.setPreferredSize(new Dimension(1100, 85));
         header.setBackground(COLOR_BG);
 
         // Sürükle bırak özelliği
@@ -78,13 +78,13 @@ public class ManagerMainFrame extends JFrame {
         });
 
         JLabel lblLogo = new JLabel("SİNEMA");
-        lblLogo.setFont(new Font("Segoe UI Black", Font.BOLD, 30));
+        lblLogo.setFont(new Font("Segoe UI Black", Font.BOLD, 28));
         lblLogo.setForeground(COLOR_ACCENT);
-        lblLogo.setBounds(40, 25, 150, 40);
+        lblLogo.setBounds(40, 22, 150, 40);
         header.add(lblLogo);
 
         JButton btnLogout = new JButton("ÇIKIŞ");
-        btnLogout.setBounds(900, 34, 90, 32);
+        btnLogout.setBounds(850, 30, 90, 32);
         styleHeaderButton(btnLogout, COLOR_ACCENT);
         btnLogout.addActionListener(e -> {
             new LoginFrame(serviceContainer).setVisible(true);
@@ -130,9 +130,9 @@ public class ManagerMainFrame extends JFrame {
 
     // Ekle, Düzenle, Sil butonlarının bulunduğu alt panel
     private void initFooter() {
-        JPanel footer = new JPanel(new FlowLayout(FlowLayout.RIGHT, 15, 20));
+        JPanel footer = new JPanel(new FlowLayout(FlowLayout.RIGHT, 15, 15));
         footer.setBackground(COLOR_BG);
-        footer.setPreferredSize(new Dimension(1150, 85));
+        footer.setPreferredSize(new Dimension(1100, 75));
 
         footer.add(createActionButton("EKLE", COLOR_ACCENT));
         footer.add(createActionButton("DÜZENLE", COLOR_CARD));
@@ -144,7 +144,7 @@ public class ManagerMainFrame extends JFrame {
     // İşlem butonlarını standart hale getiren metot
     private JButton createActionButton(String text, Color bg) {
         JButton btn = new JButton(text);
-        btn.setPreferredSize(new Dimension(140, 40));
+        btn.setPreferredSize(new Dimension(130, 35));
         btn.setBackground(bg);
         btn.setForeground(Color.WHITE);
         btn.setFont(new Font("Segoe UI Bold", Font.PLAIN, 12));
@@ -199,13 +199,18 @@ public class ManagerMainFrame extends JFrame {
     // Seçili satırdaki veriyi düzenlemek için ilgili formu açar
     private void onEdit(int tabIndex) {
         int r = getSelectedRowForTab(tabIndex);
-        if (r < 0) return;
+        if (r < 0) {
+            JOptionPane.showMessageDialog(this, "Lütfen düzenlemek için bir kayıt seçin!");
+            return;
+        }
 
         if (tabIndex == 0) {
             String name = filmModel.getValueAt(r, 1).toString();
             Film f = (Film) serviceContainer.getMediaService().getMediaByName(name);
-            new FilmFormDialog(this, "Düzenle", f, serviceContainer.getMediaService()).setVisible(true);
-            loadFilms();
+            FilmFormDialog dialog = new FilmFormDialog(this, "Düzenle", f, serviceContainer.getMediaService());
+            dialog.setModal(true);
+            dialog.setVisible(true);
+            refreshAllTables();
         } else if (tabIndex == 1) {
             onDelete(1); // Mevcut seansı silip yenisini tanımlatarak güncelleme yapıyoruz
             onAddSession();
@@ -215,51 +220,80 @@ public class ManagerMainFrame extends JFrame {
     // Seçili kaydı kullanıcı onayı ile sistemden kaldırır
     private void onDelete(int tabIndex) {
         int r = getSelectedRowForTab(tabIndex);
-        if (r < 0) return;
+        if (r < 0) {
+            JOptionPane.showMessageDialog(this, "Lütfen silinecek kaydı seçin!");
+            return;
+        }
 
         int confirm = JOptionPane.showConfirmDialog(this, "Seçili kayıt silinsin mi?", "Onay", JOptionPane.YES_NO_OPTION);
-        if (confirm == JOptionPane.OK_OPTION) {
-            if (tabIndex == 0) {
-                serviceContainer.getMediaService().deleteMedia(filmModel.getValueAt(r, 1).toString());
-            } else {
-                String film = sessionModel.getValueAt(r, 0).toString();
-                String hall = sessionModel.getValueAt(r, 1).toString();
-                String time = sessionModel.getValueAt(r, 2).toString();
-                serviceContainer.getSessionService().deleteSession(film, hall, time);
+        if (confirm == JOptionPane.YES_OPTION) {
+            try {
+                if (tabIndex == 0) {
+                    String filmName = filmModel.getValueAt(r, 1).toString();
+                    serviceContainer.getMediaService().deleteMedia(filmName);
+                } else {
+                    // DÜZELTME: Tablodaki seans verilerini alıp servis katmanına gönderiyoruz
+                    String film = sessionModel.getValueAt(r, 0).toString();
+                    String hall = sessionModel.getValueAt(r, 1).toString();
+                    String time = sessionModel.getValueAt(r, 2).toString();
+                    serviceContainer.getSessionService().deleteSession(film, hall, time);
+                }
+                refreshAllTables(); // Her durumda tabloları yeniliyoruz
+            } catch (Exception ex) {
+                String errorMsg = ex.getMessage();
+                // Veritabanı kısıtlamalarını yöneten blok [cite: 31, 410-412]
+                if (errorMsg != null && (errorMsg.contains("Referential integrity") || errorMsg.contains("CONSTRAINT"))) {
+                    JOptionPane.showMessageDialog(this,
+                            "İŞLEM ENGELLENDİ!\n\n" +
+                                    "Bu kayda bağlı başka veriler (Biletler veya Seanslar) bulunuyor.\n" +
+                                    "Lütfen önce bağlı verileri temizleyin.",
+                            "Veritabanı Kısıtlaması", JOptionPane.ERROR_MESSAGE);
+                } else {
+                    JOptionPane.showMessageDialog(this, "Beklenmedik bir hata oluştu: " + ex.getMessage());
+                }
             }
-            refreshAllTables();
         }
     }
 
     // Aktif sekmedeki seçili satır indeksini döndürür
     private int getSelectedRowForTab(int tabIndex) {
-        return (tabIndex == 0) ? tblFilms.getSelectedRow() : tblSessions.getSelectedRow();
+        JTable currentTable = (tabIndex == 0) ? tblFilms : tblSessions;
+        int viewIndex = currentTable.getSelectedRow();
+        if (viewIndex != -1) {
+            // Görseldeki sıralamayı model indeksine çevirerek doğru verinin silinmesini sağlar [cite: 362-363]
+            return currentTable.convertRowIndexToModel(viewIndex);
+        }
+        return -1;
     }
 
     private void onAddFilm() {
-        new FilmFormDialog(this, "Film Ekle", null, serviceContainer.getMediaService()).setVisible(true);
-        loadFilms();
+        FilmFormDialog dialog = new FilmFormDialog(this, "Film Ekle", null, serviceContainer.getMediaService());
+        dialog.setModal(true);
+        dialog.setVisible(true);
+        refreshAllTables();
     }
 
     private void onAddSession() {
-        new SessionFormDialog(this, serviceContainer).setVisible(true);
-        loadSessions();
+        SessionFormDialog dialog = new SessionFormDialog(this, serviceContainer);
+        dialog.setModal(true);
+        dialog.setVisible(true);
+        refreshAllTables();
     }
 
     // Tablo görünümünü (satır boyu, renkler vb.) özelleştirir
     private void styleTable(JTable table) {
-        table.setRowHeight(40);
+        table.setRowHeight(35);
         table.setBackground(COLOR_CARD);
         table.setForeground(COLOR_TEXT_MAIN);
         table.setGridColor(COLOR_BORDER);
-        table.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        table.setFont(new Font("Segoe UI", Font.PLAIN, 12));
         table.setSelectionBackground(new Color(45, 45, 45));
         table.setSelectionForeground(COLOR_ACCENT);
         table.setShowVerticalLines(false);
 
         table.getTableHeader().setBackground(COLOR_BG);
         table.getTableHeader().setForeground(COLOR_ACCENT);
-        table.getTableHeader().setFont(new Font("Segoe UI Bold", Font.PLAIN, 13));
+        table.getTableHeader().setFont(new Font("Segoe UI Bold", Font.PLAIN, 12));
 
         DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
         centerRenderer.setHorizontalAlignment(JLabel.CENTER);

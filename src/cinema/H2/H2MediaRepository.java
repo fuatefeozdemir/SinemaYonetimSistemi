@@ -193,7 +193,8 @@ public class H2MediaRepository implements MediaRepository {
             pstmt.setString(1, name);
             pstmt.executeUpdate();
         } catch (SQLException e) {
-            e.printStackTrace();
+            // Hatayı print etmek yerine RuntimeException içine sararak yukarı fırlatıyoruz
+            throw new RuntimeException(e.getMessage());
         }
     }
 

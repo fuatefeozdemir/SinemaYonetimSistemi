@@ -68,15 +68,15 @@ public class LoginFrame extends JFrame {
             }
         });
 
-        JButton btnMin = new JButton("_");
-        btnMin.setBounds(370, 10, 35, 35);
-        btnMin.setFont(new Font("Segoe UI Black", Font.BOLD, 22));
+        JButton btnMin = new JButton("-");
+        btnMin.setBounds(335, 10, 35, 35);
+        btnMin.setFont(new Font("Segoe UI Black", Font.BOLD, 20));
         styleControlBtn(btnMin, Color.WHITE);
         btnMin.addActionListener(e -> setState(JFrame.ICONIFIED));
         headerPanel.add(btnMin);
 
         JButton btnClose = new JButton("X");
-        btnClose.setBounds(410, 10, 35, 35);
+        btnClose.setBounds(375, 10, 35, 35);
         btnClose.setFont(new Font("Segoe UI Black", Font.BOLD, 18));
         styleControlBtn(btnClose, COLOR_ACCENT);
         btnClose.addActionListener(e -> System.exit(0));
@@ -202,7 +202,7 @@ public class LoginFrame extends JFrame {
         btn.setContentAreaFilled(false);
         btn.setBorderPainted(false);
         btn.setFocusPainted(false);
-        btn.setForeground(new Color(100, 100, 100));
+        btn.setForeground(new Color(180, 180, 180)); // Daha görünür gri tonu kullanıldı
         btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
         btn.addMouseListener(new MouseAdapter() {
             public void mouseEntered(MouseEvent e) {
@@ -210,7 +210,7 @@ public class LoginFrame extends JFrame {
             }
 
             public void mouseExited(MouseEvent e) {
-                btn.setForeground(new Color(100, 100, 100));
+                btn.setForeground(new Color(180, 180, 180));
             }
         });
     }

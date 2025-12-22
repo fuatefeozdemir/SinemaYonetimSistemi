@@ -120,16 +120,26 @@ public class H2SessionRepository implements SessionRepository {
             pstmt.setString(1, film);
             pstmt.setString(2, hall);
 
-            // Hatanın çözümü: Önce LocalDateTime olarak parse et, sonra Timestamp'e çevir
-            // Tablodaki format "yyyy-MM-dd HH:mm" olduğu için saniyeyi biz ekliyoruz veya uygun formatter kullanıyoruz
+            // Tablodaki veriyi parse ediyoruz
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
-            LocalDateTime localDateTime = LocalDateTime.parse(start, formatter);
+
+            // Eğer start metni saniye içeriyorsa (Örn: 2025-12-22 12:00:00)
+            // sadece ilk 16 karakteri alarak HH:mm formatına uyduruyoruz
+            String sanitizedStart = start.substring(0, 16);
+            LocalDateTime localDateTime = LocalDateTime.parse(sanitizedStart, formatter);
 
             pstmt.setTimestamp(3, Timestamp.valueOf(localDateTime));
 
+            // KRİTİK EKSİK: Sorguyu veritabanında çalıştırır
+            int affectedRows = pstmt.executeUpdate();
+
+            if (affectedRows == 0) {
+                System.out.println("Silinecek seans bulunamadı. Kriterler uyuşmuyor olabilir.");
+            }
+
         } catch (Exception e) {
-            System.err.println("Seans silme hatası: " + e.getMessage());
-            e.printStackTrace();
+            // Hatayı yukarı fırlatıyoruz ki UI katmanı (ManagerMainFrame) yakalayabilsin [cite: 134-135, 193]
+            throw new RuntimeException(e.getMessage());
         }
     }
 }

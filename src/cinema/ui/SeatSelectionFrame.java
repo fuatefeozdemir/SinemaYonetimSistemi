@@ -42,8 +42,8 @@ public class SeatSelectionFrame extends JFrame {
     private JComboBox<String> cmbSession;
 
     // Koltuk boyutlar için sabitler
-    private final int SEAT_SIZE = 45;
-    private final int SEAT_GAP = 8;
+    private final int SEAT_SIZE = 35;
+    private final int SEAT_GAP = 6;
 
     // Renk değişkenleri
     private final Color COLOR_BG = new Color(10, 10, 10);
@@ -82,9 +82,9 @@ public class SeatSelectionFrame extends JFrame {
     private void setupUI() {
         setUndecorated(true);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        setSize(1000, 850);
+        setSize(900, 650);
         setLocationRelativeTo(null);
-        setShape(new RoundRectangle2D.Double(0, 0, 1000, 850, 30, 30));
+        setShape(new RoundRectangle2D.Double(0, 0, 900, 650, 30, 30));
 
         contentPane = new JPanel(new BorderLayout());
         contentPane.setBackground(COLOR_BG);
@@ -102,16 +102,16 @@ public class SeatSelectionFrame extends JFrame {
     private void initHeader() {
         JPanel header = new JPanel(null);
         header.setBackground(COLOR_BG);
-        header.setPreferredSize(new Dimension(1000, 80));
+        header.setPreferredSize(new Dimension(900, 70));
 
         JLabel title = new JLabel(movieTitle.toUpperCase());
         title.setForeground(COLOR_ACCENT);
-        title.setFont(new Font("Segoe UI Black", Font.BOLD, 24));
-        title.setBounds(40, 20, 600, 40);
+        title.setFont(new Font("Segoe UI Black", Font.BOLD, 22));
+        title.setBounds(35, 15, 600, 40);
         header.add(title);
 
         JButton btnClose = new JButton("X");
-        btnClose.setBounds(945, 15, 40, 35);
+        btnClose.setBounds(845, 15, 40, 35);
         styleControlBtn(btnClose, COLOR_ACCENT);
         btnClose.addActionListener(e -> dispose());
         header.add(btnClose);
@@ -126,7 +126,7 @@ public class SeatSelectionFrame extends JFrame {
         contentPane.add(header, BorderLayout.NORTH);
     }
 
-   // Perde görseli oluşturur
+    // Perde görseli oluşturur
     private void initStage() {
         JPanel centerPanel = new JPanel(null);
         centerPanel.setBackground(COLOR_BG);
@@ -137,15 +137,15 @@ public class SeatSelectionFrame extends JFrame {
             protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                g2.setPaint(new GradientPaint(0, 0, new Color(229, 9, 20, 40), 0, 50, COLOR_BG));
-                g2.fillArc(50, 0, 700, 100, 0, 180);
+                g2.setPaint(new GradientPaint(0, 0, new Color(229, 9, 20, 40), 0, 40, COLOR_BG));
+                g2.fillArc(50, 0, 700, 80, 0, 180);
                 g2.setColor(new Color(60, 60, 60));
-                g2.setStroke(new BasicStroke(4));
-                g2.drawArc(50, 10, 700, 60, 0, 180);
+                g2.setStroke(new BasicStroke(3));
+                g2.drawArc(50, 10, 700, 50, 0, 180);
                 g2.dispose();
             }
         };
-        screenPanel.setBounds(100, 20, 800, 80);
+        screenPanel.setBounds(50, 10, 800, 70);
         screenPanel.setOpaque(false);
         centerPanel.add(screenPanel);
 
@@ -192,7 +192,7 @@ public class SeatSelectionFrame extends JFrame {
             int totalWidth = (cols * SEAT_SIZE) + ((cols - 1) * SEAT_GAP);
             int totalHeight = (rows * SEAT_SIZE) + ((rows - 1) * SEAT_GAP);
 
-            seatGrid.setBounds((1000 - totalWidth) / 2, 110, totalWidth, totalHeight);
+            seatGrid.setBounds((900 - totalWidth) / 2, 90, totalWidth, totalHeight);
             seatGrid.setLayout(new GridLayout(rows, cols, SEAT_GAP, SEAT_GAP));
 
             occupiedSeats = serviceContainer.getTicketService().getOccupiedSeats(currentSessionId);
@@ -224,9 +224,9 @@ public class SeatSelectionFrame extends JFrame {
                 else if (isSelected()) g2.setColor(COLOR_SEAT_SELECTED);
                 else g2.setColor(COLOR_SEAT_EMPTY);
 
-                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 10, 10);
+                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 8, 8);
                 g2.setColor(Color.WHITE);
-                g2.setFont(new Font("Segoe UI Bold", Font.PLAIN, 10));
+                g2.setFont(new Font("Segoe UI Bold", Font.PLAIN, 9));
                 FontMetrics fm = g2.getFontMetrics();
                 g2.drawString(getText(), (getWidth()-fm.stringWidth(getText()))/2, (getHeight()+fm.getAscent())/2 - 2);
                 g2.dispose();
@@ -253,19 +253,19 @@ public class SeatSelectionFrame extends JFrame {
     private void initFooter() {
         JPanel footer = new JPanel(null);
         footer.setBackground(COLOR_CARD);
-        footer.setPreferredSize(new Dimension(1000, 180));
+        footer.setPreferredSize(new Dimension(900, 140));
         footer.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, COLOR_BORDER));
 
-        JPanel legend = new JPanel(new FlowLayout(FlowLayout.CENTER, 40, 15));
+        JPanel legend = new JPanel(new FlowLayout(FlowLayout.CENTER, 30, 10));
         legend.setOpaque(false);
-        legend.setBounds(0, 5, 1000, 45);
+        legend.setBounds(0, 5, 900, 35);
         legend.add(new LegendItem(COLOR_SEAT_EMPTY, "BOŞ"));
         legend.add(new LegendItem(COLOR_SEAT_FULL, "DOLU"));
         legend.add(new LegendItem(COLOR_SEAT_SELECTED, "SEÇİLİ"));
         footer.add(legend);
 
         cmbSession = new JComboBox<>();
-        cmbSession.setBounds(50, 85, 300, 40);
+        cmbSession.setBounds(40, 65, 250, 35);
         cmbSession.setBackground(COLOR_BG);
         cmbSession.setForeground(Color.WHITE);
         cmbSession.addActionListener(e -> refreshSeats());
@@ -273,15 +273,15 @@ public class SeatSelectionFrame extends JFrame {
 
         lblSummary = new JLabel("Koltuk seçimi bekleniyor...");
         lblSummary.setForeground(COLOR_TEXT_SUB);
-        lblSummary.setFont(new Font("Segoe UI Black", Font.PLAIN, 16));
-        lblSummary.setBounds(400, 85, 350, 40);
+        lblSummary.setFont(new Font("Segoe UI Black", Font.PLAIN, 15));
+        lblSummary.setBounds(320, 65, 300, 35);
         footer.add(lblSummary);
 
         JButton btnConfirm = new JButton("ÖDEMEYE GEÇ →");
-        btnConfirm.setBounds(770, 80, 180, 50);
+        btnConfirm.setBounds(680, 60, 180, 45);
         btnConfirm.setBackground(COLOR_ACCENT);
         btnConfirm.setForeground(Color.WHITE);
-        btnConfirm.setFont(new Font("Segoe UI Black", Font.PLAIN, 14));
+        btnConfirm.setFont(new Font("Segoe UI Black", Font.PLAIN, 13));
         btnConfirm.setCursor(new Cursor(Cursor.HAND_CURSOR));
         btnConfirm.addActionListener(e -> {
             if (selectedSeats.isEmpty()) {
@@ -354,14 +354,14 @@ public class SeatSelectionFrame extends JFrame {
             JPanel box = new JPanel() {
                 @Override protected void paintComponent(Graphics g) {
                     g.setColor(color);
-                    g.fillRoundRect(0,0,14,14,4,4);
+                    g.fillRoundRect(0,0,12,12,3,3);
                 }
             };
-            box.setPreferredSize(new Dimension(14, 14));
+            box.setPreferredSize(new Dimension(12, 12));
             add(box);
             JLabel l = new JLabel(text);
             l.setForeground(COLOR_TEXT_SUB);
-            l.setFont(new Font("Segoe UI Bold", Font.PLAIN, 11));
+            l.setFont(new Font("Segoe UI Bold", Font.PLAIN, 10));
             add(l);
         }
     }
