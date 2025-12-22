@@ -37,7 +37,6 @@ public class ManagerMainFrame extends JFrame {
     public ManagerMainFrame(ServiceContainer serviceContainer) {
         this.serviceContainer = serviceContainer;
 
-        // JTabbedPane görselindeki beyazlıkları temizlemek için global UI ayarları
         UIManager.put("TabbedPane.contentBorderInsets", new Insets(0, 0, 0, 0));
         UIManager.put("TabbedPane.tabsOverlapBorder", true);
         UIManager.put("TabbedPane.shadow", COLOR_BG);
@@ -45,7 +44,6 @@ public class ManagerMainFrame extends JFrame {
         UIManager.put("TabbedPane.light", COLOR_BG);
         UIManager.put("TabbedPane.highlight", COLOR_BG);
 
-        // Pencere geometrisi
         setUndecorated(true);
         setSize(1100, 700);
         setLocationRelativeTo(null);
@@ -241,7 +239,6 @@ public class ManagerMainFrame extends JFrame {
                 refreshAllTables(); // Her durumda tabloları yeniliyoruz
             } catch (Exception ex) {
                 String errorMsg = ex.getMessage();
-                // Veritabanı kısıtlamalarını yöneten blok [cite: 31, 410-412]
                 if (errorMsg != null && (errorMsg.contains("Referential integrity") || errorMsg.contains("CONSTRAINT"))) {
                     JOptionPane.showMessageDialog(this,
                             "İŞLEM ENGELLENDİ!\n\n" +
@@ -255,12 +252,10 @@ public class ManagerMainFrame extends JFrame {
         }
     }
 
-    // Aktif sekmedeki seçili satır indeksini döndürür
     private int getSelectedRowForTab(int tabIndex) {
         JTable currentTable = (tabIndex == 0) ? tblFilms : tblSessions;
         int viewIndex = currentTable.getSelectedRow();
         if (viewIndex != -1) {
-            // Görseldeki sıralamayı model indeksine çevirerek doğru verinin silinmesini sağlar [cite: 362-363]
             return currentTable.convertRowIndexToModel(viewIndex);
         }
         return -1;
